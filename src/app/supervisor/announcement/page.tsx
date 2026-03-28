@@ -26,6 +26,8 @@ export default async function SupervisorAnnouncementPage() {
 
   async function handleCreateAnnouncement(data: { title: string; content: string; outletId: string | null }) {
     "use server";
+    const user = await getCurrentUser();
+    if (!user) return;
     
     await prisma.announcement.create({
       data: {
