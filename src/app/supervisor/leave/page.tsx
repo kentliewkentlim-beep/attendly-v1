@@ -42,6 +42,8 @@ export default async function SupervisorLeavePage() {
 
   async function handleLeaveAction(id: string, status: string, note: string) {
     "use server";
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) return;
     
     const leave = await prisma.leave.findUnique({
       where: { id },
@@ -66,6 +68,8 @@ export default async function SupervisorLeavePage() {
 
   async function handleApplyLeave(data: any) {
     "use server";
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) return;
     
     const leave = await prisma.leave.create({
       data: {

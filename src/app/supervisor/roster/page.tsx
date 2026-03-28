@@ -27,6 +27,8 @@ export default async function SupervisorRosterPage() {
 
   async function handleSaveRoster(data: any[]) {
     "use server";
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) return;
     
     for (const item of data) {
       const date = new Date(item.date);
@@ -45,7 +47,7 @@ export default async function SupervisorRosterPage() {
           userId: item.userId,
           date: date,
           shift: item.shift,
-          outletId: user.outletId
+          outletId: sessionUser.outletId
         }
       });
     }
@@ -54,6 +56,8 @@ export default async function SupervisorRosterPage() {
 
   async function handleCopyRoster(fromStart: Date, toStart: Date) {
     "use server";
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) return;
     
     const fromEnd = addDays(fromStart, 6);
     const lastWeekRosters = await prisma.roster.findMany({
@@ -84,7 +88,7 @@ export default async function SupervisorRosterPage() {
           userId: oldRoster.userId,
           date: newDate,
           shift: oldRoster.shift,
-          outletId: user.outletId
+          outletId: sessionUser.outletId
         }
       });
     }

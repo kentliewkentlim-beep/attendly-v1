@@ -50,6 +50,8 @@ export default async function SupervisorTransferPage() {
 
   async function handleRequestTransfer(staffId: string, toOutletId: string, date: string) {
     "use server";
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) return;
     
     const staff = await prisma.user.findUnique({
       where: { id: staffId }
@@ -63,7 +65,7 @@ export default async function SupervisorTransferPage() {
         fromOutletId: staff.outletId || "",
         toOutletId,
         requestDate: new Date(date),
-        requesterId: user.id,
+        requesterId: sessionUser.id,
         status: "APPROVED" // Auto-approve for demo, usually would be PENDING
       }
     });
@@ -92,9 +94,12 @@ export default async function SupervisorTransferPage() {
 
   async function handleApproveTransfer(requestId: string, status: string) {
     "use server";
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) return;
+    
     await prisma.transferRequest.update({
       where: { id: requestId },
-      data: { status, approverId: user.id }
+      data: { status, approverId: sessionUser.id }
     });
     revalidatePath("/supervisor/transfer");
   }

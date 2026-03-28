@@ -16,8 +16,8 @@ export default async function ForcePasswordChangePage() {
 
   async function handleChangePassword(formData: FormData) {
     "use server";
-    const user = await getCurrentUser();
-    if (!user) return;
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) return;
 
     const newPassword = formData.get("newPassword") as string;
     const confirmPassword = formData.get("confirmPassword") as string;
@@ -31,7 +31,7 @@ export default async function ForcePasswordChangePage() {
     }
 
     await prisma.user.update({
-      where: { id: user.id },
+      where: { id: sessionUser.id },
       data: { 
         password: newPassword,
         forcePasswordChange: false 
@@ -39,8 +39,8 @@ export default async function ForcePasswordChangePage() {
     });
 
     revalidatePath("/");
-    if (user.role === "ADMIN") redirect("/admin");
-    if (user.role === "SUPERVISOR") redirect("/supervisor");
+    if (sessionUser.role === "ADMIN") redirect("/admin");
+    if (sessionUser.role === "SUPERVISOR") redirect("/supervisor");
     redirect("/staff");
   }
 
