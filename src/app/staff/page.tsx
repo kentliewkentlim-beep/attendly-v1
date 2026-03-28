@@ -61,28 +61,28 @@ export default async function StaffDashboard() {
 
   async function handleCheckIn() {
     "use server";
-    const user = await getCurrentUser();
-    if (!user) return;
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) return;
     const today = format(new Date(), "yyyy-MM-dd");
     
     // Check if late based on roster (mock logic: 9:00 AM)
     const isLate = new Date().getHours() >= 9 && new Date().getMinutes() > 0;
 
     await prisma.attendance.upsert({
-      where: { userId_date: { userId: user.id, date: today } },
+      where: { userId_date: { userId: sessionUser.id, date: today } },
       update: { checkIn: new Date(), isLate },
-      create: { userId: user.id, date: today, checkIn: new Date(), isLate },
+      create: { userId: sessionUser.id, date: today, checkIn: new Date(), isLate },
     });
     revalidatePath("/staff");
   }
 
   async function handleLunchStart() {
     "use server";
-    const user = await getCurrentUser();
-    if (!user) return;
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) return;
     const today = format(new Date(), "yyyy-MM-dd");
     await prisma.attendance.update({
-      where: { userId_date: { userId: user.id, date: today } },
+      where: { userId_date: { userId: sessionUser.id, date: today } },
       data: { lunchStart: new Date() },
     });
     revalidatePath("/staff");
@@ -90,11 +90,11 @@ export default async function StaffDashboard() {
 
   async function handleLunchEnd() {
     "use server";
-    const user = await getCurrentUser();
-    if (!user) return;
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) return;
     const today = format(new Date(), "yyyy-MM-dd");
     await prisma.attendance.update({
-      where: { userId_date: { userId: user.id, date: today } },
+      where: { userId_date: { userId: sessionUser.id, date: today } },
       data: { lunchEnd: new Date() },
     });
     revalidatePath("/staff");
@@ -102,11 +102,11 @@ export default async function StaffDashboard() {
 
   async function handleCheckOut() {
     "use server";
-    const user = await getCurrentUser();
-    if (!user) return;
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) return;
     const today = format(new Date(), "yyyy-MM-dd");
     await prisma.attendance.update({
-      where: { userId_date: { userId: user.id, date: today } },
+      where: { userId_date: { userId: sessionUser.id, date: today } },
       data: { checkOut: new Date() },
     });
     revalidatePath("/staff");

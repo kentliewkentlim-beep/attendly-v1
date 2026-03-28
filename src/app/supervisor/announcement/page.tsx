@@ -26,16 +26,16 @@ export default async function SupervisorAnnouncementPage() {
 
   async function handleCreateAnnouncement(data: { title: string; content: string; outletId: string | null }) {
     "use server";
-    const user = await getCurrentUser();
-    if (!user) return;
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) return;
     
     await prisma.announcement.create({
       data: {
         title: data.title,
         content: data.content,
-        companyId: user.companyId,
+        companyId: sessionUser.companyId,
         outletId: data.outletId,
-        authorId: user.id
+        authorId: sessionUser.id
       }
     });
 
@@ -44,6 +44,9 @@ export default async function SupervisorAnnouncementPage() {
 
   async function handleDeleteAnnouncement(id: string) {
     "use server";
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) return;
+    
     await prisma.announcement.delete({ where: { id } });
     revalidatePath("/supervisor/announcement");
   }

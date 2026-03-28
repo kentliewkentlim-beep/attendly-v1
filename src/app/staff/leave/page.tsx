@@ -23,12 +23,12 @@ export default async function StaffLeavePage() {
     attachment?: string;
   }) {
     "use server";
-    const user = await getCurrentUser();
-    if (!user) return;
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) return;
 
     await prisma.leave.create({
       data: {
-        userId: user.id,
+        userId: sessionUser.id,
         startDate: data.startDate,
         endDate: data.endDate,
         type: data.type,
