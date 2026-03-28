@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  company   Company  @relation(fields: [companyId], references: [id])
+  companyId String
+  outlet    Outlet?  @relation(fields: [outletId], references: [id])
+  outletId  String?
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Company {
+  id             String          @id @default(cuid())
+  name           String
+  users          User[]
+  outlets        Outlet[]
+  shiftTemplates ShiftTemplate[]
+  announcements  Announcement[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model ShiftTemplate {
+  id        String   @id @default(cuid())
+  name      String   // e.g., "MORNING"
+  startTime String   // "09:00"
+  endTime   String   // "18:00"
+  color     String?  // hex color for UI
+  company   Company  @relation(fields: [companyId], references: [id])
+  companyId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Outlet {
+  id               String            @id @default(cuid())
+  name             String
+  address          String?
+  phone            String?
+  company          Company           @relation(fields: [companyId], references: [id])
+  companyId        String
+  users            User[]
+  rosters          Roster[]
+  fromTransfers    TransferRequest[] @relation("FromOutletTransfers")
+  toTransfers      TransferRequest[] @relation("ToOutletTransfers")
+  announcements    Announcement[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model User {
+  id                 String            @id @default(cuid())
+  name               String
+  email              String?           @unique
+  phone              String            @unique
+  password           String            @default("1234")
+  role               String // ADMIN, SUPERVISOR, STAFF
+  department         String? // Retail, Logistic, Rover, Admin, etc.
+  task               String? // Current task or responsibility
+  status             String            @default("ACTIVE") // ACTIVE, INACTIVE
+  leaveBalance       Int               @default(14) // Annual leave balance
+  forcePasswordChange Boolean           @default(true) // Force change on first login
+  company            Company           @relation(fields: [companyId], references: [id])
+  companyId          String
+  outlet             Outlet?           @relation(fields: [outletId], references: [id])
+  outletId           String?
+  attendances        Attendance[]
+  leaves             Leave[]
+  rosters            Roster[]
+  staffTransfers     TransferRequest[] @relation("StaffTransfers")
+  requestedTransfers TransferRequest[] @relation("RequestedTransfers")
+  approvedTransfers  TransferRequest[] @relation("ApprovedTransfers")
+  announcements      Announcement[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+}
+
+model Attendance {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  checkIn    DateTime?
+  lunchStart DateTime?
+  lunchEnd   DateTime?
+  checkOut   DateTime?
+  isLate     Boolean   @default(false)
+  date       String    // YYYY-MM-DD for easier querying
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([userId, date])
+}
+
+model Leave {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  startDate      DateTime
+  endDate        DateTime
+  type           String   @default("ANNUAL") // ANNUAL, MEDICAL, EMERGENCY, UNPAID
+  reason         String?
+  attachment     String?  // URL or path to MC
+  status         String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  supervisorNote String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Roster {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  date      DateTime
+  shift     String   // e.g., "MORNING", "AFTERNOON", "FULL_DAY"
+  location  String?
+  outletId  String?  // The actual outlet they are working at
+  outlet    Outlet?  @relation(fields: [outletId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TransferRequest {
+  id              String   @id @default(cuid())
+  staffId         String
+  staff           User     @relation("StaffTransfers", fields: [staffId], references: [id])
+  fromOutletId    String
+  fromOutlet      Outlet   @relation("FromOutletTransfers", fields: [fromOutletId], references: [id])
+  toOutletId      String
+  toOutlet        Outlet   @relation("ToOutletTransfers", fields: [toOutletId], references: [id])
+  requestDate     DateTime
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED, RETURNED
+  requesterId     String
+  requester       User     @relation("RequestedTransfers", fields: [requesterId], references: [id])
+  approverId      String?
+  approver        User?    @relation("ApprovedTransfers", fields: [approverId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

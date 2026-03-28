@@ -1,0 +1,127 @@
+import { getCurrentUser, logout } from "@/lib/auth";
+import prisma from "@/lib/prisma";
+import { redirect } from "next/navigation";
+import { 
+  User, 
+  Store, 
+  Building2, 
+  LogOut, 
+  ChevronRight, 
+  History, 
+  Wallet, 
+  CalendarCheck, 
+  Settings, 
+  HelpCircle,
+  Clock,
+  Shield
+} from "lucide-react";
+import BackButton from "@/components/BackButton";
+import Link from "next/link";
+import { format } from "date-fns";
+
+export default async function StaffProfilePage() {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) redirect("/");
+
+  const user = await prisma.user.findUnique({
+    where: { id: currentUser.id },
+    include: { company: true, outlet: true }
+  });
+
+  if (!user) redirect("/");
+
+  const menuItems = [
+    { label: "My Attendance", icon: History, href: "/staff/attendance", color: "text-blue-600 bg-blue-50" },
+    { label: "Leave Balance", icon: Wallet, href: "/staff/leave", color: "text-emerald-600 bg-emerald-50" },
+    { label: "Apply Leave", icon: CalendarCheck, href: "/staff/leave", color: "text-orange-600 bg-orange-50" },
+    { label: "Settings", icon: Settings, href: "/staff/settings", color: "text-slate-600 bg-slate-100" },
+    { label: "Help & Support", icon: HelpCircle, href: "/staff/help", color: "text-purple-600 bg-purple-50" },
+  ];
+
+  async function handleLogout() {
+    "use server";
+    await logout();
+    redirect("/");
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+      <BackButton />
+      <div className="space-y-8">
+        {/* Profile Header */}
+        <div className="card-base p-8 text-center relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-24 bg-blue-600" />
+          <div className="relative z-10 pt-4">
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-white shadow-xl border-4 border-white mb-4 overflow-hidden">
+              <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">
+                <User size={48} />
+              </div>
+            </div>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white">{user.name}</h1>
+            <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mt-1">{user.role}</p>
+            
+            <div className="mt-6 flex flex-wrap justify-center gap-4">
+              <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <Store size={14} className="text-slate-400" />
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{user.outlet?.name || "Main Outlet"}</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <Building2 size={14} className="text-slate-400" />
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{user.company.name}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Login Info */}
+        <div className="card-base p-6 flex items-center justify-between bg-blue-50/30 border-blue-100">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
+              <Shield size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Security Status</p>
+              <p className="text-xs font-bold text-slate-600">Password last updated recently</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Login</p>
+            <p className="text-xs font-bold text-slate-600">{format(new Date(), "MMM d, HH:mm")}</p>
+          </div>
+        </div>
+
+        {/* Menu Options */}
+        <div className="card-base overflow-hidden">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {menuItems.map((item) => (
+              <Link 
+                key={item.label} 
+                href={item.href}
+                className="flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`p-2.5 rounded-xl transition-transform group-hover:scale-110 ${item.color}`}>
+                    <item.icon size={20} />
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{item.label}</span>
+                </div>
+                <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Sign Out */}
+        <form action={handleLogout}>
+          <button 
+            type="submit"
+            className="w-full flex items-center justify-center gap-3 p-5 rounded-3xl bg-red-50 hover:bg-red-100 text-red-600 font-black uppercase tracking-[0.2em] text-xs transition-all active:scale-[0.98] border border-red-100"
+          >
+            <LogOut size={18} />
+            Sign Out Account
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
