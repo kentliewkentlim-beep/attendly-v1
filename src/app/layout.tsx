@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Staff Attendance App",
+  title: "Group Attendance",
   description: "A simple and clean attendance tracking system",
   manifest: "/manifest.webmanifest",
   themeColor: "#0ea5e9",
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: "Attendly",
+    title: "Group Attendance",
     statusBarStyle: "default",
   },
 };

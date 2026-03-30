@@ -42,10 +42,10 @@ export default async function LoginPage({
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl shadow-xl shadow-blue-500/20 mb-4">
-            <span className="text-white text-3xl font-bold">A</span>
+            <span className="text-white text-3xl font-bold">✓</span>
           </div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">Welcome Back</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Log in to your Attendly account</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Log in to your account</p>
         </div>
 
         <div className="card-base p-8">

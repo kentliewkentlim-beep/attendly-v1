@@ -1,6 +1,6 @@
 {
-  "name": "Attendly",
-  "short_name": "Attendly",
+  "name": "Group Attendance",
+  "short_name": "Attendance",
   "description": "Staff attendance and HR essentials",
   "start_url": "/",
   "display": "standalone",

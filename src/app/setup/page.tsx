@@ -19,8 +19,8 @@ export default async function SetupPage() {
     "use server";
 
     const company =
-      (await prisma.company.findFirst({ where: { name: "Attendly Demo" } })) ??
-      (await prisma.company.create({ data: { name: "Attendly Demo" } }));
+      (await prisma.company.findFirst({ where: { name: "Demo Company" } })) ??
+      (await prisma.company.create({ data: { name: "Demo Company" } }));
 
     const outlet =
       (await prisma.outlet.findFirst({
@@ -98,9 +98,7 @@ export default async function SetupPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-16 bg-slate-50 dark:bg-slate-950">
       <div className="w-full max-w-lg card-base p-8">
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-2">
-          Attendly Setup
-        </h1>
+        <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Initial Setup</h1>
         <p className="text-sm text-slate-500 font-medium mb-8">
           Create your first Admin and Supervisor login for the live database.
         </p>
