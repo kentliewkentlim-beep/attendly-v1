@@ -1,24 +1,75 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, LayoutDashboard, Calendar, Settings, User } from "lucide-react";
+import {
+  LogOut,
+  LayoutDashboard,
+  Calendar,
+  Settings,
+  User,
+  Users,
+  MoveRight,
+  CalendarCheck,
+  CalendarDays,
+  Activity,
+  FileText,
+  Megaphone,
+  Building2,
+  UserCheck,
+  Clock3,
+  ChevronDown,
+} from "lucide-react";
 import { useState } from "react";
 
 export default function Navbar({ user }: { user: any }) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
   const avatarSrc =
     user?.avatarUrl && user?.updatedAt
       ? `${user.avatarUrl}${user.avatarUrl.includes("?") ? "&" : "?"}v=${new Date(user.updatedAt).getTime()}`
       : user?.avatarUrl || null;
 
-  const navItems = [
-    { name: "Attendance", href: "/staff", icon: LayoutDashboard, roles: ["STAFF", "SUPERVISOR", "ADMIN"] },
-    { name: "Management", href: "/supervisor", icon: Calendar, roles: ["SUPERVISOR", "ADMIN"] },
-    { name: "Admin", href: "/admin", icon: Settings, roles: ["ADMIN"] },
+  const staffMenuItems = [
+    { name: "Dashboard", href: "/staff", icon: LayoutDashboard },
+    { name: "Attendance", href: "/staff/attendance", icon: Calendar },
+    { name: "Leave", href: "/staff/leave", icon: CalendarCheck },
+    { name: "Profile", href: "/staff/profile", icon: User },
   ];
 
-  const filteredItems = navItems.filter(item => item.roles.includes(user.role));
+  const supervisorMenuItems = [
+    { name: "Dashboard", href: "/supervisor", icon: LayoutDashboard },
+    { name: "Staff", href: "/supervisor/staff", icon: Users },
+    { name: "Staff Transfer", href: "/supervisor/transfer", icon: MoveRight },
+    { name: "Leave Approval", href: "/supervisor/leave", icon: CalendarCheck },
+    { name: "Roster", href: "/supervisor/roster", icon: CalendarDays },
+    { name: "Tracking", href: "/supervisor/tracking", icon: Activity },
+    { name: "Report", href: "/supervisor/report", icon: FileText },
+    { name: "Announcement", href: "/supervisor/announcement", icon: Megaphone },
+  ];
+
+  const adminMenuItems = [
+    { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+    { name: "Companies and Outlets", href: "/admin/companies", icon: Building2 },
+    { name: "Employee", href: "/admin/employee", icon: UserCheck },
+    { name: "Leave Management", href: "/admin/leave", icon: CalendarCheck },
+    { name: "Roster Management", href: "/admin/roster", icon: CalendarDays },
+    { name: "Shift Template", href: "/admin/shift-template", icon: Clock3 },
+    { name: "Reports", href: "/admin/reports", icon: FileText },
+  ];
+
+  const menuItems =
+    user.role === "ADMIN"
+      ? adminMenuItems
+      : user.role === "SUPERVISOR"
+        ? supervisorMenuItems
+        : staffMenuItems;
+
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
+
+  const primaryItems = menuItems.slice(0, 3);
+  const moreItems = menuItems.slice(3);
 
   return (
     <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
@@ -27,27 +78,55 @@ export default function Navbar({ user }: { user: any }) {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-2">
-                <span className="text-white font-bold">A</span>
+                <span className="text-white font-bold">✓</span>
               </div>
-              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
-                Attendly
-              </span>
             </div>
             <div className="hidden sm:-my-px sm:ml-8 sm:flex sm:space-x-4">
-              {filteredItems.map((item) => (
+              {primaryItems.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
                   className={`${
-                    pathname === item.href
+                    isActive(item.href)
                       ? "text-blue-600 dark:text-blue-400"
                       : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                   } inline-flex items-center px-3 py-2 text-sm font-semibold transition-colors rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 mt-2 h-12`}
                 >
-                  <item.icon className={`w-4 h-4 mr-2 ${pathname === item.href ? "text-blue-600" : ""}`} />
+                  <item.icon className={`w-4 h-4 mr-2 ${isActive(item.href) ? "text-blue-600" : ""}`} />
                   {item.name}
                 </Link>
               ))}
+              {moreItems.length > 0 && (
+                <div className="relative flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setIsMoreOpen((v) => !v)}
+                    className="inline-flex items-center px-3 py-2 text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 mt-2 h-12"
+                  >
+                    More
+                    <ChevronDown className="w-4 h-4 ml-1" />
+                  </button>
+                  {isMoreOpen && (
+                    <div className="absolute left-0 top-14 min-w-64 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-2 z-50">
+                      {moreItems.map((item) => (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          onClick={() => setIsMoreOpen(false)}
+                          className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                            isActive(item.href)
+                              ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                              : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                          }`}
+                        >
+                          <item.icon className="w-4 h-4" />
+                          <span className="whitespace-nowrap">{item.name}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           
@@ -104,12 +183,12 @@ export default function Navbar({ user }: { user: any }) {
       {/* Mobile menu */}
       <div className={`${isMenuOpen ? 'block' : 'hidden'} sm:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800`}>
         <div className="pt-2 pb-3 space-y-1">
-          {filteredItems.map((item) => (
+          {menuItems.map((item) => (
             <Link
               key={item.name}
               href={item.href}
               className={`${
-                pathname === item.href
+                isActive(item.href)
                   ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-700 dark:text-blue-400"
                   : "border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
               } block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors`}
