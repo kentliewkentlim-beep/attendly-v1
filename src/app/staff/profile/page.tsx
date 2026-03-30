@@ -60,9 +60,14 @@ export default async function StaffProfilePage() {
     const { data } = supabase.storage.from("avatars").getPublicUrl(path);
     await (prisma as any).user.update({ where: { id: me.id }, data: { avatarUrl: data.publicUrl } });
     revalidatePath("/staff/profile");
+    redirect("/staff/profile");
   }
 
   const avatar = (user as any).avatarUrl as string | undefined;
+  const avatarSrc =
+    avatar
+      ? `${avatar}${avatar.includes("?") ? "&" : "?"}v=${user.updatedAt.getTime()}`
+      : `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user.name)}`;
 
   return (
     <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -74,7 +79,7 @@ export default async function StaffProfilePage() {
             <div className="inline-flex items-center justify-center rounded-3xl bg-white shadow-xl border-4 border-white mb-4 overflow-hidden">
               <AvatarUploader
                 size={96}
-                src={avatar || `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user.name)}`}
+                src={avatarSrc}
                 onUpload={handleUpload}
               />
             </div>
@@ -118,7 +123,7 @@ export default async function StaffProfilePage() {
             </div>
           </div>
           <AvatarUploader
-            src={avatar || `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user.name)}`}
+            src={avatarSrc}
             onUpload={handleUpload}
           />
         </div>
