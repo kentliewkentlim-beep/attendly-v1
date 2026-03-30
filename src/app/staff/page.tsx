@@ -7,8 +7,18 @@ import { Clock, Coffee, LogOut, LogIn, CheckCircle2, AlertCircle, Megaphone, Use
 import LiveClock from "@/components/LiveClock";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
+import LocalDateInput from "@/components/LocalDateInput";
+import { headers } from "next/headers";
 
 export default async function StaffDashboard() {
+  const hdrs = await headers();
+  const tz = hdrs.get("x-vercel-ip-timezone") || "UTC";
+  const nowLocal = new Date(
+    new Date().toLocaleString("en-US", { timeZone: tz })
+  );
+  const todayStr = `${nowLocal.getFullYear()}-${String(
+    nowLocal.getMonth() + 1
+  ).padStart(2, "0")}-${String(nowLocal.getDate()).padStart(2, "0")}`;
   const user = await prisma.user.findFirst({
     where: { id: (await getCurrentUser())?.id },
     include: { 
@@ -19,12 +29,11 @@ export default async function StaffDashboard() {
   
   if (!user) redirect("/");
 
-  const today = format(new Date(), "yyyy-MM-dd");
   const attendance = await prisma.attendance.findUnique({
     where: {
       userId_date: {
         userId: user.id,
-        date: today,
+        date: todayStr,
       },
     },
   });
@@ -33,8 +42,8 @@ export default async function StaffDashboard() {
     where: {
       userId: user.id,
       date: {
-        gte: new Date(today),
-        lt: addDays(new Date(today), 1)
+        gte: new Date(todayStr),
+        lt: addDays(new Date(todayStr), 1)
       }
     }
   });
@@ -59,54 +68,54 @@ export default async function StaffDashboard() {
     leaveBalance: user.leaveBalance
   };
 
-  async function handleCheckIn() {
+  async function handleCheckIn(formData: FormData) {
     "use server";
     const sessionUser = await getCurrentUser();
     if (!sessionUser) return;
-    const today = format(new Date(), "yyyy-MM-dd");
+    const localDate = (formData.get("localDate") as string) || format(new Date(), "yyyy-MM-dd");
     
     // Check if late based on roster (mock logic: 9:00 AM)
     const isLate = new Date().getHours() >= 9 && new Date().getMinutes() > 0;
 
     await prisma.attendance.upsert({
-      where: { userId_date: { userId: sessionUser.id, date: today } },
+      where: { userId_date: { userId: sessionUser.id, date: localDate } },
       update: { checkIn: new Date(), isLate },
-      create: { userId: sessionUser.id, date: today, checkIn: new Date(), isLate },
+      create: { userId: sessionUser.id, date: localDate, checkIn: new Date(), isLate },
     });
     revalidatePath("/staff");
   }
 
-  async function handleLunchStart() {
+  async function handleLunchStart(formData: FormData) {
     "use server";
     const sessionUser = await getCurrentUser();
     if (!sessionUser) return;
-    const today = format(new Date(), "yyyy-MM-dd");
+    const localDate = (formData.get("localDate") as string) || format(new Date(), "yyyy-MM-dd");
     await prisma.attendance.update({
-      where: { userId_date: { userId: sessionUser.id, date: today } },
+      where: { userId_date: { userId: sessionUser.id, date: localDate } },
       data: { lunchStart: new Date() },
     });
     revalidatePath("/staff");
   }
 
-  async function handleLunchEnd() {
+  async function handleLunchEnd(formData: FormData) {
     "use server";
     const sessionUser = await getCurrentUser();
     if (!sessionUser) return;
-    const today = format(new Date(), "yyyy-MM-dd");
+    const localDate = (formData.get("localDate") as string) || format(new Date(), "yyyy-MM-dd");
     await prisma.attendance.update({
-      where: { userId_date: { userId: sessionUser.id, date: today } },
+      where: { userId_date: { userId: sessionUser.id, date: localDate } },
       data: { lunchEnd: new Date() },
     });
     revalidatePath("/staff");
   }
 
-  async function handleCheckOut() {
+  async function handleCheckOut(formData: FormData) {
     "use server";
     const sessionUser = await getCurrentUser();
     if (!sessionUser) return;
-    const today = format(new Date(), "yyyy-MM-dd");
+    const localDate = (formData.get("localDate") as string) || format(new Date(), "yyyy-MM-dd");
     await prisma.attendance.update({
-      where: { userId_date: { userId: sessionUser.id, date: today } },
+      where: { userId_date: { userId: sessionUser.id, date: localDate } },
       data: { checkOut: new Date() },
     });
     revalidatePath("/staff");
@@ -215,6 +224,7 @@ export default async function StaffDashboard() {
                 <div className="flex justify-center py-4">
                   {!attendance?.checkIn ? (
                     <form action={handleCheckIn} className="w-full">
+                      <LocalDateInput />
                       <button type="submit" className="relative group/btn flex flex-col items-center justify-center w-48 h-48 mx-auto rounded-full bg-blue-600 hover:bg-blue-700 shadow-2xl shadow-blue-500/40 transition-all active:scale-95">
                         <div className="absolute inset-0 rounded-full border-4 border-white/20 scale-110 group-hover/btn:scale-125 transition-transform duration-500" />
                         <LogIn className="w-12 h-12 text-white mb-2" />
@@ -223,6 +233,7 @@ export default async function StaffDashboard() {
                     </form>
                   ) : !attendance.lunchStart ? (
                     <form action={handleLunchStart} className="w-full">
+                      <LocalDateInput />
                       <button type="submit" className="relative group/btn flex flex-col items-center justify-center w-48 h-48 mx-auto rounded-full bg-orange-500 hover:bg-orange-600 shadow-2xl shadow-orange-500/40 transition-all active:scale-95">
                         <div className="absolute inset-0 rounded-full border-4 border-white/20 scale-110 group-hover/btn:scale-125 transition-transform duration-500" />
                         <Coffee className="w-12 h-12 text-white mb-2" />
@@ -231,6 +242,7 @@ export default async function StaffDashboard() {
                     </form>
                   ) : !attendance.lunchEnd ? (
                     <form action={handleLunchEnd} className="w-full">
+                      <LocalDateInput />
                       <button type="submit" className="relative group/btn flex flex-col items-center justify-center w-48 h-48 mx-auto rounded-full bg-emerald-500 hover:bg-emerald-600 shadow-2xl shadow-emerald-500/40 transition-all active:scale-95">
                         <div className="absolute inset-0 rounded-full border-4 border-white/20 scale-110 group-hover/btn:scale-125 transition-transform duration-500" />
                         <Coffee className="w-12 h-12 text-white mb-2" />
@@ -239,6 +251,7 @@ export default async function StaffDashboard() {
                     </form>
                   ) : !attendance.checkOut ? (
                     <form action={handleCheckOut} className="w-full">
+                      <LocalDateInput />
                       <button type="submit" className="relative group/btn flex flex-col items-center justify-center w-48 h-48 mx-auto rounded-full bg-slate-900 hover:bg-black shadow-2xl shadow-slate-900/40 transition-all active:scale-95">
                         <div className="absolute inset-0 rounded-full border-4 border-white/20 scale-110 group-hover/btn:scale-125 transition-transform duration-500" />
                         <LogOut className="w-12 h-12 text-white mb-2" />

@@ -66,6 +66,7 @@ model User {
   email              String?           @unique
   phone              String            @unique
   password           String            @default("1234")
+  avatarUrl          String?
   role               String // ADMIN, SUPERVISOR, STAFF
   department         String? // Retail, Logistic, Rover, Admin, etc.
   task               String? // Current task or responsibility

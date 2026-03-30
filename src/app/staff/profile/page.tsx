@@ -1,23 +1,25 @@
 import { getCurrentUser, logout } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { 
-  User, 
-  Store, 
-  Building2, 
-  LogOut, 
-  ChevronRight, 
-  History, 
-  Wallet, 
-  CalendarCheck, 
-  Settings, 
+import {
+  User,
+  Store,
+  Building2,
+  LogOut,
+  ChevronRight,
+  History,
+  Wallet,
+  CalendarCheck,
+  Settings,
   HelpCircle,
-  Clock,
   Shield
 } from "lucide-react";
-import BackButton from "@/components/BackButton";
 import Link from "next/link";
 import { format } from "date-fns";
+import BackButton from "@/components/BackButton";
+import { revalidatePath } from "next/cache";
+import { getSupabaseServiceClient } from "@/lib/supabase";
+import AvatarUploader from "@/components/AvatarUploader";
 
 export default async function StaffProfilePage() {
   const currentUser = await getCurrentUser();
@@ -44,18 +46,37 @@ export default async function StaffProfilePage() {
     redirect("/");
   }
 
+  async function handleUpload(formData: FormData) {
+    "use server";
+    const me = await getCurrentUser();
+    if (!me) return;
+    const file = formData.get("avatar") as File | null;
+    if (!file) return;
+    const supabase = getSupabaseServiceClient();
+    await supabase.storage.createBucket("avatars", { public: true }).catch(() => {});
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `users/${me.id}.${ext}`;
+    await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type || "image/jpeg" });
+    const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+    await (prisma as any).user.update({ where: { id: me.id }, data: { avatarUrl: data.publicUrl } });
+    revalidatePath("/staff/profile");
+  }
+
+  const avatar = (user as any).avatarUrl as string | undefined;
+
   return (
     <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <BackButton />
       <div className="space-y-8">
-        {/* Profile Header */}
         <div className="card-base p-8 text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-24 bg-blue-600" />
           <div className="relative z-10 pt-4">
-            <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-white shadow-xl border-4 border-white mb-4 overflow-hidden">
-              <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">
-                <User size={48} />
-              </div>
+            <div className="inline-flex items-center justify-center rounded-3xl bg-white shadow-xl border-4 border-white mb-4 overflow-hidden">
+              <AvatarUploader
+                size={96}
+                src={avatar || `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user.name)}`}
+                onUpload={handleUpload}
+              />
             </div>
             <h1 className="text-2xl font-black text-slate-900 dark:text-white">{user.name}</h1>
             <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mt-1">{user.role}</p>
@@ -73,7 +94,6 @@ export default async function StaffProfilePage() {
           </div>
         </div>
 
-        {/* Login Info */}
         <div className="card-base p-6 flex items-center justify-between bg-blue-50/30 border-blue-100">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
@@ -90,7 +110,19 @@ export default async function StaffProfilePage() {
           </div>
         </div>
 
-        {/* Menu Options */}
+        <div className="card-base p-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Profile Photo</p>
+              <p className="text-xs font-bold text-slate-600">Tap photo to change</p>
+            </div>
+          </div>
+          <AvatarUploader
+            src={avatar || `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user.name)}`}
+            onUpload={handleUpload}
+          />
+        </div>
+
         <div className="card-base overflow-hidden">
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {menuItems.map((item) => (
@@ -111,7 +143,6 @@ export default async function StaffProfilePage() {
           </div>
         </div>
 
-        {/* Sign Out */}
         <form action={handleLogout}>
           <button 
             type="submit"
