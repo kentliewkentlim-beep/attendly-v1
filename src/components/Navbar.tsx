@@ -7,6 +7,10 @@ import { useState } from "react";
 export default function Navbar({ user }: { user: any }) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const avatarSrc =
+    user?.avatarUrl && user?.updatedAt
+      ? `${user.avatarUrl}${user.avatarUrl.includes("?") ? "&" : "?"}v=${new Date(user.updatedAt).getTime()}`
+      : user?.avatarUrl || null;
 
   const navItems = [
     { name: "Attendance", href: "/staff", icon: LayoutDashboard, roles: ["STAFF", "SUPERVISOR", "ADMIN"] },
@@ -56,7 +60,15 @@ export default function Navbar({ user }: { user: any }) {
                 </span>
               </div>
               <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700">
-                <User className="w-5 h-5 text-slate-500" />
+                {avatarSrc ? (
+                  <img
+                    src={avatarSrc}
+                    alt="Avatar"
+                    className="h-10 w-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="w-5 h-5 text-slate-500" />
+                )}
               </div>
               <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2" />
               <form action="/api/logout" method="POST">
@@ -113,7 +125,15 @@ export default function Navbar({ user }: { user: any }) {
         <div className="pt-4 pb-3 border-t border-slate-200 dark:border-slate-800 px-4">
           <div className="flex items-center mb-3">
             <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-              <User className="w-5 h-5 text-slate-500" />
+              {avatarSrc ? (
+                <img
+                  src={avatarSrc}
+                  alt="Avatar"
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+              ) : (
+                <User className="w-5 h-5 text-slate-500" />
+              )}
             </div>
             <div className="ml-3">
               <div className="text-base font-medium text-slate-800 dark:text-slate-200">{user.name}</div>
