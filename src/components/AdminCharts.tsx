@@ -65,32 +65,53 @@ export function AttendanceTrendChart({ data }: { data: any[] }) {
 
 export function CompanyDistributionChart({ data }: { data: any[] }) {
   return (
-    <div className="h-[300px] w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={60}
-            outerRadius={80}
-            paddingAngle={5}
-            dataKey="value"
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip 
-            contentStyle={{ 
-              borderRadius: '12px', 
-              border: 'none', 
-              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' 
-            }} 
-          />
-          <Legend verticalAlign="bottom" height={36}/>
-        </PieChart>
-      </ResponsiveContainer>
+    <div className="h-[300px] w-full flex flex-col">
+      <div className="flex-1 min-h-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="45%"
+              innerRadius={60}
+              outerRadius={80}
+              paddingAngle={5}
+              dataKey="value"
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{
+                borderRadius: "12px",
+                border: "none",
+                boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="mt-3 max-h-24 overflow-y-auto pr-1">
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          {data.map((item, index) => (
+            <div
+              key={`${item.name}-${index}`}
+              className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 min-w-[10rem]"
+            >
+              <span
+                className="h-2.5 w-2.5 rounded-sm flex-shrink-0"
+                style={{ backgroundColor: COLORS[index % COLORS.length] }}
+              />
+              <span className="truncate">{item.name}</span>
+              <span className="ml-auto tabular-nums text-slate-900 dark:text-slate-100 font-bold">
+                {item.value}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
