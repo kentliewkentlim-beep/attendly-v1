@@ -136,65 +136,64 @@ export default function RosterClient({
         </div>
       </div>
 
-      {/* Week Selector & Shift Tools */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 card-base p-6 flex flex-col gap-6">
-          <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Select Company</p>
-            <select
-              value={selectedCompanyId}
-              onChange={(e) => handleCompanyChange(e.target.value)}
-              className="block w-full px-4 h-11 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
-            >
-              {companies.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Select Week</p>
-          <div className="flex items-center justify-between">
-            <button 
-              onClick={() => setCurrentWeekStart(subWeeks(currentWeekStart, 1))}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
-            >
-              <ChevronLeft size={24} className="text-slate-600" />
-            </button>
-            <div className="text-center">
-              <p className="text-sm font-bold text-slate-900 dark:text-white">
-                {format(currentWeekStart, "MMM d")} - {format(addDays(currentWeekStart, 6), "MMM d, yyyy")}
-              </p>
-              <p className="text-[10px] text-blue-600 font-bold uppercase mt-1">Week {format(currentWeekStart, "w")}</p>
+      <div className="sticky top-16 z-40">
+        <div className="bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur rounded-3xl border border-slate-200/60 dark:border-slate-800/60 p-2">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1 card-base p-6 flex flex-col gap-6">
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Select Company</p>
+                <select
+                  value={selectedCompanyId}
+                  onChange={(e) => handleCompanyChange(e.target.value)}
+                  className="block w-full px-4 h-11 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+                >
+                  {companies.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Select Week</p>
+              <div className="flex items-center justify-between">
+                <button 
+                  onClick={() => setCurrentWeekStart(subWeeks(currentWeekStart, 1))}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                >
+                  <ChevronLeft size={24} className="text-slate-600" />
+                </button>
+                <div className="text-center">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">
+                    {format(currentWeekStart, "MMM d")} - {format(addDays(currentWeekStart, 6), "MMM d, yyyy")}
+                  </p>
+                  <p className="text-[10px] text-blue-600 font-bold uppercase mt-1">Week {format(currentWeekStart, "w")}</p>
+                </div>
+                <button 
+                  onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                >
+                  <ChevronRight size={24} className="text-slate-600" />
+                </button>
+              </div>
             </div>
-            <button 
-              onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
-            >
-              <ChevronRight size={24} className="text-slate-600" />
-            </button>
-          </div>
-        </div>
 
-        <div className="lg:col-span-2 card-base p-6">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Select Shift to Assign</p>
-          <div className="flex flex-wrap gap-3">
-            {shiftTypes.map((type) => (
-              <button
-                key={type.name}
-                onClick={() => setSelectedShift(type.name)}
-                className={`px-6 py-3 rounded-2xl border-2 font-bold text-sm transition-all flex items-center gap-2 ${
-                  selectedShift === type.name 
-                    ? `${type.color} ring-4 ring-offset-2 ring-blue-500/10` 
-                    : "bg-white dark:bg-slate-900 text-slate-400 border-slate-100 dark:border-slate-800"
-                }`}
-              >
-                {"dotColor" in type ? (
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: (type as any).dotColor }} />
-                ) : (
-                  <div className={`w-2 h-2 rounded-full ${type.color.split(' ')[0]}`} />
-                )}
-                {type.name}
-              </button>
-            ))}
+            <div className="lg:col-span-2 card-base p-6">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Select Shift to Assign</p>
+              <div className="flex flex-wrap gap-3">
+                {shiftTypes.map((type) => (
+                  <button
+                    key={type.name}
+                    onClick={() => setSelectedShift(type.name)}
+                    className={`px-6 py-3 rounded-2xl border-2 font-bold text-sm transition-all flex items-center gap-2 ${
+                      selectedShift === type.name 
+                        ? `${type.color} ring-4 ring-offset-2 ring-blue-500/10` 
+                        : "bg-white dark:bg-slate-900 text-slate-400 border-slate-100 dark:border-slate-800"
+                    }`}
+                  >
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: type.dotColor || "#2563eb" }} />
+                    {type.name}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
