@@ -275,8 +275,8 @@ export default async function EmployeeListPage({
 
       {/* Filters Card */}
       <div className="card-base p-6">
-        <form method="GET" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-1">
+        <form method="GET" className="flex flex-col gap-4">
+          <div>
             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Search Staff</label>
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
@@ -287,63 +287,63 @@ export default async function EmployeeListPage({
                 name="q"
                 defaultValue={query}
                   placeholder="Name, Nickname, Phone, Email..."
-                className="block w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                className="block w-full pl-10 pr-4 h-11 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
             </div>
           </div>
 
           <AutoSubmit>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:col-span-4">
-              <div>
+            <div className="flex flex-wrap gap-4">
+              <div className="min-w-[10rem] flex-1">
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Company</label>
                 <select 
                   name="company" 
                   defaultValue={companyFilter}
-                  className="block w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+                  className="block w-full px-4 h-11 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
                 >
-                  <option value="">All Companies</option>
+                  <option value="">Any Company</option>
                   {companies.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
               </div>
 
-              <div>
+              <div className="min-w-[10rem] flex-1">
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Outlet</label>
                 <select 
                   name="outlet" 
                   defaultValue={outletFilter}
-                  className="block w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+                  className="block w-full px-4 h-11 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
                 >
-                  <option value="">All Outlets</option>
+                  <option value="">Any Outlet</option>
                   {outlets.map(o => (
                     <option key={o.id} value={o.id}>{o.name}</option>
                   ))}
                 </select>
               </div>
 
-              <div>
+              <div className="min-w-[10rem] flex-1">
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Role</label>
                 <select 
                   name="role" 
                   defaultValue={roleFilter}
-                  className="block w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+                  className="block w-full px-4 h-11 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
                 >
-                  <option value="">All Roles</option>
+                  <option value="">Any Role</option>
                   <option value="STAFF">Staff</option>
                   <option value="SUPERVISOR">Supervisor</option>
                   <option value="ADMIN">Admin</option>
                 </select>
               </div>
 
-              <div>
+              <div className="min-w-[10rem] flex-1">
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Status</label>
                 <select 
                   name="status" 
                   defaultValue={statusFilter}
-                  className="block w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+                  className="block w-full px-4 h-11 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
                 >
-                  <option value="">All Status</option>
+                  <option value="">Any Status</option>
                   <option value="ACTIVE">Active</option>
                   <option value="INACTIVE">Inactive</option>
                 </select>
