@@ -58,6 +58,17 @@ export default async function EmployeeProfilePage({
     revalidatePath("/admin/employee");
   }
 
+  async function updateNickname(formData: FormData) {
+    "use server";
+    const nickname = (formData.get("nickname") as string) || null;
+    await prisma.user.update({
+      where: { id },
+      data: { nickname },
+    });
+    revalidatePath(`/admin/employee/${id}`);
+    revalidatePath("/admin/employee");
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -116,6 +127,21 @@ export default async function EmployeeProfilePage({
               <History size={14} className="mr-2" />
               Information
             </h3>
+            <form action={updateNickname} className="mb-6">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nickname</label>
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  name="nickname"
+                  defaultValue={employee.nickname || ""}
+                  placeholder="Optional"
+                  className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+                <button type="submit" className="btn-primary h-11 px-5 whitespace-nowrap">
+                  Save
+                </button>
+              </div>
+            </form>
             <div className="space-y-6">
               <DetailItem icon={User} label="Nickname" value={employee.nickname || "Not provided"} />
               <DetailItem icon={Phone} label="Phone Number" value={employee.phone} />
