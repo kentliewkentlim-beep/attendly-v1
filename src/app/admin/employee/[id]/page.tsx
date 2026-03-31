@@ -9,6 +9,7 @@ import {
   Mail, 
   Briefcase, 
   ShieldCheck,
+  User,
   UserX,
   UserCheck,
   MoreVertical,
@@ -70,6 +71,9 @@ export default async function EmployeeProfilePage({
           </Link>
           <div>
             <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">{employee.name}</h1>
+            {employee.nickname && (
+              <p className="text-sm font-bold text-slate-500 mt-1">{employee.nickname}</p>
+            )}
             <div className="flex items-center gap-2 mt-1">
               <span className={`status-badge ${
                 employee.status === "ACTIVE" 
@@ -113,6 +117,7 @@ export default async function EmployeeProfilePage({
               Information
             </h3>
             <div className="space-y-6">
+              <DetailItem icon={User} label="Nickname" value={employee.nickname || "Not provided"} />
               <DetailItem icon={Phone} label="Phone Number" value={employee.phone} />
               <DetailItem icon={Mail} label="Email Address" value={employee.email || "Not provided"} />
               <DetailItem icon={Building2} label="Company" value={employee.company?.name || "N/A"} />

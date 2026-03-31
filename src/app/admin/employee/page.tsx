@@ -53,6 +53,7 @@ export default async function EmployeeListPage({
         {
           OR: [
             { name: { contains: query } },
+            { nickname: { contains: query } },
             { phone: { contains: query } },
             { email: { contains: query } },
           ],
@@ -72,6 +73,7 @@ export default async function EmployeeListPage({
 
   const exportData = employees.map(emp => ({
     Name: emp.name,
+    Nickname: emp.nickname || "N/A",
     Phone: emp.phone,
     Email: emp.email || "N/A",
     Role: emp.role,
@@ -116,7 +118,7 @@ export default async function EmployeeListPage({
                 type="text"
                 name="q"
                 defaultValue={query}
-                placeholder="Name, Phone, Email..."
+                  placeholder="Name, Nickname, Phone, Email..."
                 className="block w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
             </div>
@@ -221,6 +223,9 @@ export default async function EmployeeListPage({
                         </div>
                         <div>
                           <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{emp.name || "Unknown"}</p>
+                          {emp.nickname && (
+                            <p className="text-[11px] text-slate-500">{emp.nickname}</p>
+                          )}
                           <p className="text-xs text-slate-500 tabular-nums">{emp.phone || "No Phone"}</p>
                         </div>
                       </div>

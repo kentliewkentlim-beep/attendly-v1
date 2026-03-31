@@ -26,6 +26,7 @@ export default async function AddEmployeePage() {
     "use server";
     
     const name = formData.get("name") as string;
+    const nickname = formData.get("nickname") as string;
     const phone = formData.get("phone") as string;
     const email = formData.get("email") as string;
     const role = formData.get("role") as string;
@@ -42,6 +43,7 @@ export default async function AddEmployeePage() {
       await prisma.user.create({
         data: {
           name,
+          nickname: nickname || null,
           phone,
           email: email || null,
           role,
@@ -96,6 +98,21 @@ export default async function AddEmployeePage() {
                     name="name"
                     required
                     placeholder="e.g. John Doe"
+                    className="block w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nickname (Optional)</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                    <User size={18} />
+                  </div>
+                  <input
+                    type="text"
+                    name="nickname"
+                    placeholder="e.g. Liew, Kent"
                     className="block w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                   />
                 </div>

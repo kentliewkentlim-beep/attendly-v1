@@ -63,6 +63,7 @@ model Outlet {
 model User {
   id                 String            @id @default(cuid())
   name               String
+  nickname           String?
   email              String?           @unique
   phone              String            @unique
   password           String            @default("1234")
