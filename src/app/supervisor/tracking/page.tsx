@@ -15,7 +15,7 @@ export default async function SupervisorTrackingPage() {
     where: { 
       companyId: user.companyId,
       role: "STAFF",
-      outletId: user.outletId
+      ...(user.outletId ? { outletId: user.outletId } : {})
     },
     include: {
       attendances: {
@@ -35,7 +35,7 @@ export default async function SupervisorTrackingPage() {
       date: todayStr,
       user: {
         companyId: user.companyId,
-        outletId: user.outletId
+        ...(user.outletId ? { outletId: user.outletId } : {})
       }
     },
     include: { user: true }

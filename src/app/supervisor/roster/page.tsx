@@ -13,7 +13,7 @@ export default async function SupervisorRosterPage() {
     where: { 
       companyId: user.companyId,
       role: "STAFF",
-      outletId: user.outletId
+      ...(user.outletId ? { outletId: user.outletId } : {})
     },
     orderBy: { name: "asc" }
   });

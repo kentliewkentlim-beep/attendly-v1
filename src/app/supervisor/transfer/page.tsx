@@ -12,7 +12,7 @@ export default async function SupervisorTransferPage() {
     where: { 
       companyId: user.companyId,
       role: "STAFF",
-      outletId: user.outletId
+      ...(user.outletId ? { outletId: user.outletId } : {})
     },
     orderBy: { name: "asc" }
   });
@@ -21,20 +21,24 @@ export default async function SupervisorTransferPage() {
     where: { 
       companyId: user.companyId,
       role: "STAFF",
-      outletId: { not: user.outletId }
+      ...(user.outletId ? { outletId: { not: user.outletId } } : {})
     },
     include: { outlet: true },
     orderBy: { name: "asc" }
   });
 
+  const activeTransfersWhere = user.outletId
+    ? {
+        OR: [{ fromOutletId: user.outletId }, { toOutletId: user.outletId }],
+        status: { not: "RETURNED" as const },
+      }
+    : {
+        staff: { companyId: user.companyId },
+        status: { not: "RETURNED" as const },
+      };
+
   const activeTransfers = await prisma.transferRequest.findMany({
-    where: {
-      OR: [
-        { fromOutletId: user.outletId || "" },
-        { toOutletId: user.outletId || "" }
-      ],
-      status: { not: "RETURNED" }
-    },
+    where: activeTransfersWhere,
     include: {
       staff: true,
       fromOutlet: true,

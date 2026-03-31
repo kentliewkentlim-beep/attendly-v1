@@ -13,7 +13,7 @@ export default async function SupervisorLeavePage() {
     where: { 
       companyId: user.companyId,
       role: "STAFF",
-      outletId: user.outletId
+      ...(user.outletId ? { outletId: user.outletId } : {})
     },
     include: {
       leaves: {
@@ -31,7 +31,7 @@ export default async function SupervisorLeavePage() {
     where: {
       user: {
         companyId: user.companyId,
-        outletId: user.outletId
+        ...(user.outletId ? { outletId: user.outletId } : {})
       }
     },
     include: {

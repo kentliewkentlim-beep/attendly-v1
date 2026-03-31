@@ -15,7 +15,7 @@ export default async function SupervisorStaffPage() {
     where: { 
       companyId: user.companyId,
       role: "STAFF",
-      outletId: user.outletId
+      ...(user.outletId ? { outletId: user.outletId } : {})
     },
     include: {
       attendances: {
