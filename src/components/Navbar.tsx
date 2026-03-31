@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LogOut,
@@ -83,9 +82,10 @@ export default function Navbar({ user }: { user: any }) {
             </div>
             <div className="hidden sm:-my-px sm:ml-8 sm:flex sm:space-x-4">
               {primaryItems.map((item) => (
-                <Link
+                <a
                   key={item.name}
                   href={item.href}
+                  onClick={() => setIsMoreOpen(false)}
                   className={`${
                     isActive(item.href)
                       ? "text-blue-600 dark:text-blue-400"
@@ -94,7 +94,7 @@ export default function Navbar({ user }: { user: any }) {
                 >
                   <item.icon className={`w-4 h-4 mr-2 ${isActive(item.href) ? "text-blue-600" : ""}`} />
                   {item.name}
-                </Link>
+                </a>
               ))}
               {moreItems.length > 0 && (
                 <div className="relative flex items-center">
@@ -109,7 +109,7 @@ export default function Navbar({ user }: { user: any }) {
                   {isMoreOpen && (
                     <div className="absolute left-0 top-14 min-w-64 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-2 z-50">
                       {moreItems.map((item) => (
-                        <Link
+                        <a
                           key={item.name}
                           href={item.href}
                           onClick={() => setIsMoreOpen(false)}
@@ -121,7 +121,7 @@ export default function Navbar({ user }: { user: any }) {
                         >
                           <item.icon className="w-4 h-4" />
                           <span className="whitespace-nowrap">{item.name}</span>
-                        </Link>
+                        </a>
                       ))}
                     </div>
                   )}
@@ -184,7 +184,7 @@ export default function Navbar({ user }: { user: any }) {
       <div className={`${isMenuOpen ? 'block' : 'hidden'} sm:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800`}>
         <div className="pt-2 pb-3 space-y-1">
           {menuItems.map((item) => (
-            <Link
+            <a
               key={item.name}
               href={item.href}
               className={`${
@@ -198,7 +198,7 @@ export default function Navbar({ user }: { user: any }) {
                 <item.icon className="w-5 h-5 mr-3" />
                 {item.name}
               </div>
-            </Link>
+            </a>
           ))}
         </div>
         <div className="pt-4 pb-3 border-t border-slate-200 dark:border-slate-800 px-4">
