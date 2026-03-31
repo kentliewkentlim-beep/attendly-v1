@@ -24,12 +24,14 @@ import {
 } from "date-fns";
 
 export default function RosterClient({ 
+  companies,
   staff, 
   rosters, 
   shiftTemplates,
   onSaveRoster,
   onCopyRoster
 }: { 
+  companies: any[];
   staff: any[]; 
   rosters: any[]; 
   shiftTemplates: any[];
@@ -37,12 +39,16 @@ export default function RosterClient({
   onCopyRoster: (fromStart: Date, toStart: Date) => Promise<void>;
 }) {
   const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
-  const [selectedShift, setSelectedShift] = useState<string>("Day");
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>(companies?.[0]?.id || "");
+  const [selectedShift, setSelectedShift] = useState<string>(shiftTemplates?.[0]?.name || "Off");
   const [isSaving, setIsSaving] = useState(false);
-  const [localRosters, setLocalRosters] = useState<any[]>(rosters);
+  const [localRosters, setLocalRosters] = useState<any[]>(
+    rosters.filter((r: any) => r.user?.companyId === selectedCompanyId)
+  );
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
 
+  type ShiftType = { name: string; color: string; dotColor?: string };
   const handleShiftClick = (userId: string, date: Date) => {
     const dateStr = format(date, "yyyy-MM-dd");
     const existingIndex = localRosters.findIndex(r => r.userId === userId && format(new Date(r.date), "yyyy-MM-dd") === dateStr);
@@ -78,13 +84,28 @@ export default function RosterClient({
     }
   };
 
-  const shiftTypes = [
-    { name: "Day", color: "bg-blue-100 text-blue-700 border-blue-200" },
-    { name: "Evening", color: "bg-purple-100 text-purple-700 border-purple-200" },
-    { name: "Full", color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-    { name: "Off", color: "bg-slate-100 text-slate-700 border-slate-200" },
-    { name: "Leave", color: "bg-red-100 text-red-700 border-red-200" },
+  const templateTypes: ShiftType[] = (shiftTemplates || [])
+    .filter((t: any) => t.companyId === selectedCompanyId)
+    .map((t: any) => ({
+    name: t.name as string,
+    color: "bg-blue-100 text-blue-700 border-blue-200",
+    dotColor: t.color || "#2563eb",
+  }));
+  const shiftTypes: ShiftType[] = [
+    ...templateTypes,
+    { name: "Off", color: "bg-slate-100 text-slate-700 border-slate-200", dotColor: "#64748b" },
+    { name: "Leave", color: "bg-red-100 text-red-700 border-red-200", dotColor: "#ef4444" },
   ];
+
+  const filteredStaff = staff.filter((m: any) => m.companyId === selectedCompanyId);
+
+  // When company changes, reset local rosters to that company
+  function handleCompanyChange(id: string) {
+    setSelectedCompanyId(id);
+    setLocalRosters(rosters.filter((r: any) => r.user?.companyId === id));
+    const firstTemplate = shiftTemplates.find((t: any) => t.companyId === id);
+    setSelectedShift(firstTemplate?.name || "Off");
+  }
 
   return (
     <div className="space-y-8">
@@ -117,7 +138,19 @@ export default function RosterClient({
 
       {/* Week Selector & Shift Tools */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 card-base p-6 flex flex-col justify-between">
+        <div className="lg:col-span-1 card-base p-6 flex flex-col gap-6">
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Select Company</p>
+            <select
+              value={selectedCompanyId}
+              onChange={(e) => handleCompanyChange(e.target.value)}
+              className="block w-full px-4 h-11 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+            >
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Select Week</p>
           <div className="flex items-center justify-between">
             <button 
@@ -154,7 +187,11 @@ export default function RosterClient({
                     : "bg-white dark:bg-slate-900 text-slate-400 border-slate-100 dark:border-slate-800"
                 }`}
               >
-                <div className={`w-2 h-2 rounded-full ${type.color.split(' ')[0]}`} />
+                {"dotColor" in type ? (
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: (type as any).dotColor }} />
+                ) : (
+                  <div className={`w-2 h-2 rounded-full ${type.color.split(' ')[0]}`} />
+                )}
                 {type.name}
               </button>
             ))}
@@ -182,7 +219,7 @@ export default function RosterClient({
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800">
-              {staff.map((member) => (
+              {filteredStaff.map((member) => (
                 <tr key={member.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
                   <td className="sticky left-0 z-10 bg-white dark:bg-slate-900 px-6 py-4 whitespace-nowrap border-r border-slate-100 dark:border-slate-800 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
                     <div className="flex items-center gap-3">

@@ -4,6 +4,9 @@ import RosterClient from "./RosterClient";
 import { startOfWeek, addDays, subWeeks, format } from "date-fns";
 
 export default async function AdminRosterPage() {
+  const companies = await prisma.company.findMany({
+    orderBy: { name: "asc" }
+  });
   const staff = await prisma.user.findMany({
     where: { role: { not: "ADMIN" } },
     include: { company: true, outlet: true },
@@ -86,6 +89,7 @@ export default async function AdminRosterPage() {
 
   return (
     <RosterClient 
+      companies={companies}
       staff={staff} 
       rosters={rosters} 
       shiftTemplates={shiftTemplates}
