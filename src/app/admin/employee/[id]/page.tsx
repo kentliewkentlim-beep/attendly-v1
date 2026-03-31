@@ -112,10 +112,13 @@ export default async function EmployeeProfilePage({
               )}
             </button>
           </form>
-          <button className="btn-primary h-11 px-6 shadow-lg shadow-blue-500/20">
+          <Link
+            href={`/admin/employee/${id}/edit`}
+            className="btn-primary h-11 px-6 shadow-lg shadow-blue-500/20 inline-flex items-center justify-center"
+          >
             <Edit size={18} className="mr-2" />
             Edit Profile
-          </button>
+          </Link>
         </div>
       </div>
 

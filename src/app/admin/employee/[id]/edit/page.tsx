@@ -1,0 +1,225 @@
+import prisma from "@/lib/prisma";
+import { redirect, notFound } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft, Save } from "lucide-react";
+
+export default async function EmployeeEditPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
+  const employee = await prisma.user.findUnique({
+    where: { id },
+  });
+
+  if (!employee) notFound();
+
+  const companies = await prisma.company.findMany({ orderBy: { name: "asc" } });
+  const outlets = await prisma.outlet.findMany({ orderBy: { name: "asc" } });
+
+  async function save(formData: FormData) {
+    "use server";
+
+    const name = (formData.get("name") as string) || "";
+    const nickname = (formData.get("nickname") as string) || null;
+    const email = (formData.get("email") as string) || null;
+    const phone = (formData.get("phone") as string) || "";
+    const role = (formData.get("role") as string) || "STAFF";
+    const department = (formData.get("department") as string) || null;
+    const task = (formData.get("task") as string) || null;
+    const status = (formData.get("status") as string) || "ACTIVE";
+    const companyId = (formData.get("companyId") as string) || "";
+    const outletId = (formData.get("outletId") as string) || "";
+
+    await prisma.user.update({
+      where: { id },
+      data: {
+        name,
+        nickname,
+        email,
+        phone,
+        role,
+        department,
+        task,
+        status,
+        companyId,
+        outletId: outletId || null,
+      },
+    });
+
+    redirect(`/admin/employee/${id}`);
+  }
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center gap-4">
+        <Link
+          href={`/admin/employee/${id}`}
+          className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-blue-600 transition-all shadow-sm"
+        >
+          <ArrowLeft size={20} />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">
+            Edit Employee
+          </h1>
+          <p className="text-slate-500 text-sm font-medium mt-1">
+            Update profile and assignment details
+          </p>
+        </div>
+      </div>
+
+      <form action={save} className="card-base p-6 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+              Full Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              defaultValue={employee.name}
+              required
+              className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+              Nickname
+            </label>
+            <input
+              type="text"
+              name="nickname"
+              defaultValue={(employee as any).nickname || ""}
+              className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+              Phone
+            </label>
+            <input
+              type="tel"
+              name="phone"
+              defaultValue={employee.phone}
+              required
+              className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              defaultValue={employee.email || ""}
+              className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+              Role
+            </label>
+            <select
+              name="role"
+              defaultValue={employee.role}
+              className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+            >
+              <option value="STAFF">Staff</option>
+              <option value="SUPERVISOR">Supervisor</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+              Status
+            </label>
+            <select
+              name="status"
+              defaultValue={employee.status}
+              className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+            >
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+              Company
+            </label>
+            <select
+              name="companyId"
+              defaultValue={employee.companyId}
+              required
+              className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+            >
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+              Outlet
+            </label>
+            <select
+              name="outletId"
+              defaultValue={employee.outletId || ""}
+              className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+            >
+              <option value="">Unassigned</option>
+              {outlets.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+              Department
+            </label>
+            <input
+              type="text"
+              name="department"
+              defaultValue={employee.department || ""}
+              className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+              Task
+            </label>
+            <input
+              type="text"
+              name="task"
+              defaultValue={employee.task || ""}
+              className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <button type="submit" className="btn-primary h-11 px-6 shadow-lg shadow-blue-500/20">
+            <Save size={18} className="mr-2" />
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
