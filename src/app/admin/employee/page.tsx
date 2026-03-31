@@ -117,6 +117,9 @@ export default async function EmployeeListPage({
     let created = 0;
     let updated = 0;
     const errors: Array<{ row: number; message: string; phone?: string }> = [];
+    const warnings: Array<{ row: number; message: string; phone?: string }> = [];
+    const seenPhones = new Set<string>();
+    const seenEmails = new Set<string>();
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
@@ -125,7 +128,7 @@ export default async function EmployeeListPage({
       const name = cleanStr(getVal(row, "Name"));
       const nickname = cleanStr(getVal(row, "Nickname")) || null;
       const phone = cleanPhone(getVal(row, "Phone"));
-      const email = cleanStr(getVal(row, "Email")) || null;
+      const emailRaw = cleanStr(getVal(row, "Email"));
       const role = (cleanStr(getVal(row, "Role")) || "STAFF").toUpperCase();
       const department = cleanStr(getVal(row, "Department")) || null;
       const task = cleanStr(getVal(row, "Task")) || null;
@@ -144,6 +147,10 @@ export default async function EmployeeListPage({
         errors.push({ row: rowNumber, message: "Missing Phone" });
         continue;
       }
+      if (seenPhones.has(phone)) {
+        warnings.push({ row: rowNumber, phone, message: "Duplicate Phone in file (latest row wins)" });
+      }
+      seenPhones.add(phone);
       if (!["STAFF", "SUPERVISOR", "ADMIN"].includes(role)) {
         errors.push({ row: rowNumber, phone, message: `Invalid Role: ${role}` });
         continue;
@@ -151,6 +158,28 @@ export default async function EmployeeListPage({
       if (!["ACTIVE", "INACTIVE"].includes(status)) {
         errors.push({ row: rowNumber, phone, message: `Invalid Status: ${status}` });
         continue;
+      }
+
+      const emailPlaceholder = emailRaw.toLowerCase();
+      const emailLooksEmpty =
+        !emailRaw ||
+        ["n/a", "na", "none", "-", "null"].includes(emailPlaceholder);
+
+      let email: string | null = emailLooksEmpty ? null : emailRaw.toLowerCase();
+      if (email) {
+        const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        if (!emailValid) {
+          warnings.push({ row: rowNumber, phone, message: `Invalid Email format, ignored: ${emailRaw}` });
+          email = null;
+        }
+      }
+      if (email) {
+        if (seenEmails.has(email)) {
+          warnings.push({ row: rowNumber, phone, message: `Duplicate Email in file, ignored: ${email}` });
+          email = null;
+        } else {
+          seenEmails.add(email);
+        }
       }
 
       const company =
@@ -168,6 +197,26 @@ export default async function EmployeeListPage({
 
       try {
         const existing = await prisma.user.findUnique({ where: { phone } });
+        if (email) {
+          const owner = await prisma.user.findUnique({ where: { email } });
+          if (owner && owner.phone !== phone) {
+            warnings.push({ row: rowNumber, phone, message: `Email already used by another user, ignored: ${email}` });
+            email = null;
+          }
+        }
+
+        const updateData: any = {
+          name,
+          nickname,
+          role,
+          status,
+          department,
+          task,
+          companyId: company.id,
+          outletId: outlet?.id || null,
+        };
+        if (email !== null) updateData.email = email;
+
         await prisma.user.upsert({
           where: { phone },
           create: {
@@ -183,17 +232,7 @@ export default async function EmployeeListPage({
             outletId: outlet?.id || null,
             password: "1234",
           },
-          update: {
-            name,
-            nickname,
-            email,
-            role,
-            status,
-            department,
-            task,
-            companyId: company.id,
-            outletId: outlet?.id || null,
-          },
+          update: updateData,
         });
         if (existing) updated += 1;
         else created += 1;
@@ -210,6 +249,7 @@ export default async function EmployeeListPage({
       updated,
       failed: errors.length,
       errors,
+      warnings,
     };
   }
 

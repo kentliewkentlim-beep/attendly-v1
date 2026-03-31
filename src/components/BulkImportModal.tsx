@@ -10,6 +10,7 @@ type ImportResult = {
   updated: number;
   failed: number;
   errors: Array<{ row: number; message: string; phone?: string }>;
+  warnings?: Array<{ row: number; message: string; phone?: string }>;
 };
 
 export default function BulkImportModal({ onImport }: { onImport: (data: any[]) => Promise<ImportResult> }) {
@@ -135,6 +136,11 @@ export default function BulkImportModal({ onImport }: { onImport: (data: any[]) 
                       <p className="font-black text-slate-900">
                         Imported: {result.total} rows • Created: {result.created} • Updated: {result.updated} • Failed: {result.failed}
                       </p>
+                      {(result.warnings?.length ?? 0) > 0 && (
+                        <p className="text-xs text-slate-600 mt-1">
+                          Warnings: {result.warnings?.length}
+                        </p>
+                      )}
                       {result.failed > 0 && (
                         <div className="mt-3 max-h-40 overflow-y-auto rounded-xl bg-white/60 p-3">
                           <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Errors</p>
@@ -146,6 +152,21 @@ export default function BulkImportModal({ onImport }: { onImport: (data: any[]) 
                             ))}
                             {result.errors.length > 50 && (
                               <div className="text-xs text-slate-500">…and {result.errors.length - 50} more</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {(result.warnings?.length ?? 0) > 0 && (
+                        <div className="mt-3 max-h-40 overflow-y-auto rounded-xl bg-white/60 p-3">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Warnings</p>
+                          <div className="space-y-1">
+                            {result.warnings?.slice(0, 50).map((warn, idx) => (
+                              <div key={idx} className="text-xs text-slate-700">
+                                Row {warn.row}: {warn.phone ? `${warn.phone} — ` : ""}{warn.message}
+                              </div>
+                            ))}
+                            {(result.warnings?.length ?? 0) > 50 && (
+                              <div className="text-xs text-slate-500">…and {(result.warnings?.length ?? 0) - 50} more</div>
                             )}
                           </div>
                         </div>
