@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import RosterClient from "./RosterClient";
-import { startOfWeek, addDays, subWeeks, format } from "date-fns";
+import { addDays, differenceInCalendarDays, format } from "date-fns";
 
 export default async function AdminRosterPage() {
   const companies = await prisma.company.findMany({
@@ -28,19 +28,19 @@ export default async function AdminRosterPage() {
     // We'll perform a sync: delete existing for the dates in data, then re-insert
     // For simplicity in this demo, we'll update based on userId and date
     for (const item of data) {
-      const date = new Date(item.date);
-      date.setHours(0, 0, 0, 0);
+      const dateStr = String(item.date);
+      const date = new Date(`${dateStr}T00:00:00.000Z`);
 
       await prisma.roster.upsert({
         where: {
-          id: item.id || `roster-${item.userId}-${format(date, "yyyy-MM-dd")}`
+          id: item.id || `roster-${item.userId}-${dateStr}`
         },
         update: {
           shift: item.shift,
           date: date
         },
         create: {
-          id: `roster-${item.userId}-${format(date, "yyyy-MM-dd")}`,
+          id: `roster-${item.userId}-${dateStr}`,
           userId: item.userId,
           date: date,
           shift: item.shift
@@ -50,34 +50,37 @@ export default async function AdminRosterPage() {
     revalidatePath("/admin/roster");
   }
 
-  async function handleCopyRoster(fromStart: Date, toStart: Date) {
+  async function handleCopyRoster(fromStart: string, toStart: string) {
     "use server";
     
-    const fromEnd = addDays(fromStart, 6);
+    const fromStartDate = new Date(`${fromStart}T00:00:00.000Z`);
+    const toStartDate = new Date(`${toStart}T00:00:00.000Z`);
+    const fromEnd = addDays(fromStartDate, 6);
     const lastWeekRosters = await prisma.roster.findMany({
       where: {
         date: {
-          gte: fromStart,
+          gte: fromStartDate,
           lte: fromEnd
         }
       }
     });
 
     for (const oldRoster of lastWeekRosters) {
-      const daysDiff = Math.round((oldRoster.date.getTime() - fromStart.getTime()) / (1000 * 60 * 60 * 24));
-      const newDate = addDays(toStart, daysDiff);
-      newDate.setHours(0, 0, 0, 0);
+      const daysDiff = differenceInCalendarDays(oldRoster.date, fromStartDate);
+      const newDate = addDays(toStartDate, daysDiff);
+      newDate.setUTCHours(0, 0, 0, 0);
+      const newDateStr = format(newDate, "yyyy-MM-dd");
 
       await prisma.roster.upsert({
         where: {
-          id: `roster-${oldRoster.userId}-${format(newDate, "yyyy-MM-dd")}`
+          id: `roster-${oldRoster.userId}-${newDateStr}`
         },
         update: {
           shift: oldRoster.shift,
           date: newDate
         },
         create: {
-          id: `roster-${oldRoster.userId}-${format(newDate, "yyyy-MM-dd")}`,
+          id: `roster-${oldRoster.userId}-${newDateStr}`,
           userId: oldRoster.userId,
           date: newDate,
           shift: oldRoster.shift

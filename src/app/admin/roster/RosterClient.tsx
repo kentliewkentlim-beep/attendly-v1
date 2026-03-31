@@ -36,22 +36,28 @@ export default function RosterClient({
   rosters: any[]; 
   shiftTemplates: any[];
   onSaveRoster: (data: any[]) => Promise<void>;
-  onCopyRoster: (fromStart: Date, toStart: Date) => Promise<void>;
+  onCopyRoster: (fromStart: string, toStart: string) => Promise<void>;
 }) {
   const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>(companies?.[0]?.id || "");
   const [selectedShift, setSelectedShift] = useState<string>(shiftTemplates?.[0]?.name || "Off");
   const [isSaving, setIsSaving] = useState(false);
-  const [localRosters, setLocalRosters] = useState<any[]>(
-    rosters.filter((r: any) => r.user?.companyId === selectedCompanyId)
-  );
+  const normalizeRostersForCompany = (companyId: string) =>
+    rosters
+      .filter((r: any) => r.user?.companyId === companyId)
+      .map((r: any) => ({
+        ...r,
+        date: format(new Date(r.date), "yyyy-MM-dd"),
+      }));
+
+  const [localRosters, setLocalRosters] = useState<any[]>(normalizeRostersForCompany(selectedCompanyId));
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
 
   type ShiftType = { name: string; color: string; dotColor?: string };
   const handleShiftClick = (userId: string, date: Date) => {
     const dateStr = format(date, "yyyy-MM-dd");
-    const existingIndex = localRosters.findIndex(r => r.userId === userId && format(new Date(r.date), "yyyy-MM-dd") === dateStr);
+    const existingIndex = localRosters.findIndex((r) => r.userId === userId && r.date === dateStr);
     
     let newRosters = [...localRosters];
     if (existingIndex > -1) {
@@ -61,14 +67,14 @@ export default function RosterClient({
         newRosters[existingIndex] = { ...newRosters[existingIndex], shift: selectedShift };
       }
     } else {
-      newRosters.push({ userId, date, shift: selectedShift });
+      newRosters.push({ userId, date: dateStr, shift: selectedShift });
     }
     setLocalRosters(newRosters);
   };
 
   const getShiftForUserAndDate = (userId: string, date: Date) => {
     const dateStr = format(date, "yyyy-MM-dd");
-    return localRosters.find(r => r.userId === userId && format(new Date(r.date), "yyyy-MM-dd") === dateStr);
+    return localRosters.find((r) => r.userId === userId && r.date === dateStr);
   };
 
   const handleSave = async () => {
@@ -80,7 +86,7 @@ export default function RosterClient({
   const handleCopyLastWeek = async () => {
     if (confirm("Copy roster from last week to this week?")) {
       const lastWeekStart = subWeeks(currentWeekStart, 1);
-      await onCopyRoster(lastWeekStart, currentWeekStart);
+      await onCopyRoster(format(lastWeekStart, "yyyy-MM-dd"), format(currentWeekStart, "yyyy-MM-dd"));
     }
   };
 
@@ -102,7 +108,7 @@ export default function RosterClient({
   // When company changes, reset local rosters to that company
   function handleCompanyChange(id: string) {
     setSelectedCompanyId(id);
-    setLocalRosters(rosters.filter((r: any) => r.user?.companyId === id));
+    setLocalRosters(normalizeRostersForCompany(id));
     const firstTemplate = shiftTemplates.find((t: any) => t.companyId === id);
     setSelectedShift(firstTemplate?.name || "Off");
   }
