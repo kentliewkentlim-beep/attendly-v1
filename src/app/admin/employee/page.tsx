@@ -21,6 +21,8 @@ import { format, isValid } from "date-fns";
 import { AutoSubmit } from "@/components/AutoSubmit";
 import ExportButton from "@/components/ExportButton";
 import BulkImportModal from "@/components/BulkImportModal";
+import { getCurrentUser } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
 
 export default async function EmployeeListPage({
   searchParams,
@@ -86,6 +88,131 @@ export default async function EmployeeListPage({
     Joined: emp.createdAt && isValid(new Date(emp.createdAt)) ? format(new Date(emp.createdAt), "yyyy-MM-dd") : "N/A",
   }));
 
+  async function bulkImport(rows: any[]) {
+    "use server";
+
+    const user = await getCurrentUser();
+    if (!user || user.role !== "ADMIN") {
+      throw new Error("Unauthorized");
+    }
+
+    const normalizeKey = (k: string) => k.replace(/\s+/g, "").toLowerCase();
+    const getVal = (row: any, key: string) => {
+      const keys = Object.keys(row || {});
+      const found = keys.find((k) => normalizeKey(k) === normalizeKey(key));
+      return found ? row[found] : undefined;
+    };
+
+    const cleanStr = (v: any) => (v === null || v === undefined ? "" : String(v)).trim();
+    const cleanPhone = (v: any) => cleanStr(v).replace(/[^\d+]/g, "");
+
+    const companies = await prisma.company.findMany();
+    const companyById = new Map(companies.map((c) => [c.id, c]));
+    const companyByName = new Map(companies.map((c) => [c.name.toLowerCase(), c]));
+
+    const outlets = await prisma.outlet.findMany();
+    const outletById = new Map(outlets.map((o) => [o.id, o]));
+    const outletByNameCompany = new Map(outlets.map((o) => [`${o.companyId}::${o.name.toLowerCase()}`, o]));
+
+    let created = 0;
+    let updated = 0;
+    const errors: Array<{ row: number; message: string; phone?: string }> = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const rowNumber = i + 2;
+
+      const name = cleanStr(getVal(row, "Name"));
+      const nickname = cleanStr(getVal(row, "Nickname")) || null;
+      const phone = cleanPhone(getVal(row, "Phone"));
+      const email = cleanStr(getVal(row, "Email")) || null;
+      const role = (cleanStr(getVal(row, "Role")) || "STAFF").toUpperCase();
+      const department = cleanStr(getVal(row, "Department")) || null;
+      const task = cleanStr(getVal(row, "Task")) || null;
+      const status = (cleanStr(getVal(row, "Status")) || "ACTIVE").toUpperCase();
+
+      const companyIdRaw = cleanStr(getVal(row, "CompanyID"));
+      const companyNameRaw = cleanStr(getVal(row, "Company"));
+      const outletIdRaw = cleanStr(getVal(row, "OutletID"));
+      const outletNameRaw = cleanStr(getVal(row, "Outlet"));
+
+      if (!name) {
+        errors.push({ row: rowNumber, phone: phone || undefined, message: "Missing Name" });
+        continue;
+      }
+      if (!phone) {
+        errors.push({ row: rowNumber, message: "Missing Phone" });
+        continue;
+      }
+      if (!["STAFF", "SUPERVISOR", "ADMIN"].includes(role)) {
+        errors.push({ row: rowNumber, phone, message: `Invalid Role: ${role}` });
+        continue;
+      }
+      if (!["ACTIVE", "INACTIVE"].includes(status)) {
+        errors.push({ row: rowNumber, phone, message: `Invalid Status: ${status}` });
+        continue;
+      }
+
+      const company =
+        (companyIdRaw ? companyById.get(companyIdRaw) : undefined) ??
+        (companyNameRaw ? companyByName.get(companyNameRaw.toLowerCase()) : undefined);
+      if (!company) {
+        errors.push({ row: rowNumber, phone, message: "Company not found (use CompanyID or Company name)" });
+        continue;
+      }
+
+      const outlet =
+        (outletIdRaw ? outletById.get(outletIdRaw) : undefined) ??
+        (outletNameRaw ? outletByNameCompany.get(`${company.id}::${outletNameRaw.toLowerCase()}`) : undefined) ??
+        null;
+
+      try {
+        const existing = await prisma.user.findUnique({ where: { phone } });
+        await prisma.user.upsert({
+          where: { phone },
+          create: {
+            name,
+            nickname,
+            phone,
+            email,
+            role,
+            status,
+            department,
+            task,
+            companyId: company.id,
+            outletId: outlet?.id || null,
+            password: "1234",
+          },
+          update: {
+            name,
+            nickname,
+            email,
+            role,
+            status,
+            department,
+            task,
+            companyId: company.id,
+            outletId: outlet?.id || null,
+          },
+        });
+        if (existing) updated += 1;
+        else created += 1;
+      } catch (e: any) {
+        errors.push({ row: rowNumber, phone, message: e?.message || "Failed to import row" });
+      }
+    }
+
+    revalidatePath("/admin/employee");
+
+    return {
+      total: rows.length,
+      created,
+      updated,
+      failed: errors.length,
+      errors,
+    };
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -97,7 +224,7 @@ export default async function EmployeeListPage({
           <p className="text-slate-500 mt-1 font-medium">Manage and monitor all staff members across the organization</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <BulkImportModal onImport={async (data) => { "use server"; console.log("Importing", data.length); }} />
+          <BulkImportModal onImport={bulkImport} />
           <ExportButton data={exportData} filename={`employee_list_${format(new Date(), "yyyyMMdd")}`} />
           <Link href="/admin/employee/add" className="btn-primary h-11 px-6 shadow-lg shadow-blue-500/20">
             <Plus size={18} className="mr-2" />

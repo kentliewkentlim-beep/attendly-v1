@@ -4,16 +4,27 @@ import { useState } from "react";
 import { Upload, FileUp, AlertCircle, CheckCircle2, X } from "lucide-react";
 import * as XLSX from "xlsx";
 
-export default function BulkImportModal({ onImport }: { onImport: (data: any[]) => Promise<void> }) {
+type ImportResult = {
+  total: number;
+  created: number;
+  updated: number;
+  failed: number;
+  errors: Array<{ row: number; message: string; phone?: string }>;
+};
+
+export default function BulkImportModal({ onImport }: { onImport: (data: any[]) => Promise<ImportResult> }) {
   const [isOpen, setIsOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<any[]>([]);
+  const [rows, setRows] = useState<any[]>([]);
   const [isImporting, setIsImporting] = useState(false);
+  const [result, setResult] = useState<ImportResult | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
+      setResult(null);
       const reader = new FileReader();
       reader.onload = (evt) => {
         const bstr = evt.target?.result;
@@ -21,6 +32,7 @@ export default function BulkImportModal({ onImport }: { onImport: (data: any[]) 
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
         const data = XLSX.utils.sheet_to_json(ws);
+        setRows(data);
         setPreview(data.slice(0, 5));
       };
       reader.readAsBinaryString(selectedFile);
@@ -28,16 +40,21 @@ export default function BulkImportModal({ onImport }: { onImport: (data: any[]) 
   };
 
   const handleImport = async () => {
-    if (!file) return;
+    if (!file || rows.length === 0) return;
     setIsImporting(true);
-    // In a real app, we'd process all rows
-    // For now we'll just simulate
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      const res = await onImport(rows);
+      setResult(res);
+      if (res.failed === 0) {
+        setIsOpen(false);
+        setFile(null);
+        setPreview([]);
+        setRows([]);
+      }
+    } catch (e: any) {
+      alert(e?.message || "Bulk import failed");
+    }
     setIsImporting(false);
-    setIsOpen(false);
-    setFile(null);
-    setPreview([]);
-    alert("Bulk import simulated successfully!");
   };
 
   return (
@@ -108,13 +125,43 @@ export default function BulkImportModal({ onImport }: { onImport: (data: any[]) 
                 </div>
               )}
 
+              {result && (
+                <div className={`rounded-2xl p-4 border ${result.failed === 0 ? "bg-emerald-50 border-emerald-100" : "bg-orange-50 border-orange-100"}`}>
+                  <div className="flex items-start gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${result.failed === 0 ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-700"}`}>
+                      <CheckCircle2 size={20} />
+                    </div>
+                    <div className="text-sm">
+                      <p className="font-black text-slate-900">
+                        Imported: {result.total} rows • Created: {result.created} • Updated: {result.updated} • Failed: {result.failed}
+                      </p>
+                      {result.failed > 0 && (
+                        <div className="mt-3 max-h-40 overflow-y-auto rounded-xl bg-white/60 p-3">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Errors</p>
+                          <div className="space-y-1">
+                            {result.errors.slice(0, 50).map((err, idx) => (
+                              <div key={idx} className="text-xs text-slate-700">
+                                Row {err.row}: {err.phone ? `${err.phone} — ` : ""}{err.message}
+                              </div>
+                            ))}
+                            {result.errors.length > 50 && (
+                              <div className="text-xs text-slate-500">…and {result.errors.length - 50} more</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-2xl p-4 flex gap-3">
                 <AlertCircle className="text-blue-600 flex-shrink-0" size={20} />
                 <div className="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">
                   <p className="font-bold mb-1">Important Requirements:</p>
                   <ul className="list-disc ml-4 space-y-0.5">
-                    <li>Column headers must match: Name, Phone, Email, Role, CompanyID, OutletID</li>
-                    <li>CompanyID and OutletID must exist in the system</li>
+                    <li>Headers supported: Name, Nickname, Phone, Email, Role, CompanyID (or Company), OutletID (or Outlet), Department, Task, Status</li>
+                    <li>Company must exist (by ID or Name)</li>
                     <li>Phone numbers must be unique</li>
                   </ul>
                 </div>
