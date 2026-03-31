@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import LeaveActionModal from "@/components/LeaveActionModal";
+import { getDisplayName, getInitials, getSecondaryName } from "@/lib/displayName";
 
 export default function SupervisorLeaveClient({ 
   staff,
@@ -43,7 +44,10 @@ export default function SupervisorLeaveClient({
 
   const filteredRequests = leaveRequests.filter(req => {
     const matchesStatus = statusFilter === "ALL" || req.status === statusFilter;
-    const matchesSearch = req.user.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+      getDisplayName(req.user).toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (req.user.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (req.user.nickname || "").toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
@@ -134,7 +138,7 @@ export default function SupervisorLeaveClient({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Employee name..."
+                placeholder="Name / Nickname..."
                 className="block w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
             </div>
@@ -187,10 +191,13 @@ export default function SupervisorLeaveClient({
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-600 font-bold text-sm">
-                            {req.user.name[0]}
+                            {getInitials(req.user)}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white">{req.user.name}</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">{getDisplayName(req.user)}</p>
+                            {getSecondaryName(req.user) && (
+                              <p className="text-[11px] text-slate-500">{getSecondaryName(req.user)}</p>
+                            )}
                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{req.user.department}</p>
                           </div>
                         </div>
@@ -239,10 +246,10 @@ export default function SupervisorLeaveClient({
           {staff.filter(s => s.leaves.length > 0).map(member => (
             <div key={member.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-bold">
-                {member.name[0]}
+                {getInitials(member)}
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{member.name}</p>
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{getDisplayName(member)}</p>
                 <p className="text-[9px] text-slate-400 font-bold uppercase truncate">Until {format(new Date(member.leaves[0].endDate), "MMM d")}</p>
               </div>
             </div>

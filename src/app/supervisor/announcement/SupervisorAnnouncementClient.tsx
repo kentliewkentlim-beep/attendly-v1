@@ -15,6 +15,7 @@ import {
   Clock
 } from "lucide-react";
 import { format } from "date-fns";
+import { getDisplayName } from "@/lib/displayName";
 
 export default function SupervisorAnnouncementClient({ 
   announcements,
@@ -104,7 +105,7 @@ export default function SupervisorAnnouncementClient({
                       <div className="flex items-center gap-4">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
                           <User size={12} />
-                          {ann.author.name}
+                          {getDisplayName(ann.author)}
                         </span>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
                           <Clock size={12} />

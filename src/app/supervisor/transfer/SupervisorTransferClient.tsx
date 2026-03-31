@@ -17,6 +17,7 @@ import {
   Plus
 } from "lucide-react";
 import { format } from "date-fns";
+import { getDisplayName, getInitials, getSecondaryName } from "@/lib/displayName";
 
 export default function SupervisorTransferClient({ 
   myStaff,
@@ -78,10 +79,13 @@ export default function SupervisorTransferClient({
                 <div key={staff.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex justify-between items-center group hover:border-blue-200 transition-all">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center text-blue-600 font-bold text-sm shadow-sm border border-slate-100 dark:border-slate-800">
-                      {staff.name[0]}
+                      {getInitials(staff)}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">{staff.name}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">{getDisplayName(staff)}</p>
+                      {getSecondaryName(staff) && (
+                        <p className="text-[11px] text-slate-500">{getSecondaryName(staff)}</p>
+                      )}
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1">
                         <Store size={10} />
                         {staff.outlet.name}
@@ -110,7 +114,7 @@ export default function SupervisorTransferClient({
             <div className="card-base p-6 border-2 border-blue-500 animate-in fade-in slide-in-from-top-4 duration-300">
               <div className="flex justify-between items-center mb-6">
                 <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  Request Transfer for {selectedStaff.name}
+                  Request Transfer for {getDisplayName(selectedStaff)}
                 </h4>
                 <button onClick={() => setSelectedStaff(null)} className="text-slate-400 hover:text-slate-600">
                   <XCircle size={20} />
@@ -169,10 +173,13 @@ export default function SupervisorTransferClient({
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center text-emerald-600 font-bold text-xs shadow-sm">
-                        {req.staff.name[0]}
+                      {getInitials(req.staff)}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{req.staff.name}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">{getDisplayName(req.staff)}</p>
+                      {getSecondaryName(req.staff) && (
+                        <p className="text-[11px] text-slate-500">{getSecondaryName(req.staff)}</p>
+                      )}
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
                           {req.fromOutlet.name} <ArrowRight size={8} className="inline mx-1" /> {req.toOutlet.name}
                         </p>
@@ -222,10 +229,10 @@ export default function SupervisorTransferClient({
               {myStaff.map((staff) => (
                 <div key={staff.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 font-bold text-xs">
-                    {staff.name[0]}
+                    {getInitials(staff)}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{staff.name}</p>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{getDisplayName(staff)}</p>
                     <p className="text-[9px] text-slate-400 font-bold uppercase truncate">{staff.department}</p>
                   </div>
                 </div>

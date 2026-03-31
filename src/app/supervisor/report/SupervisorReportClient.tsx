@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth } from "date-fns";
 import ExportButton from "@/components/ExportButton";
+import { getDisplayName, getInitials, getSecondaryName } from "@/lib/displayName";
 
 export default function SupervisorReportClient({ 
   attendanceData,
@@ -43,14 +44,16 @@ export default function SupervisorReportClient({
 
     const matchesOutlet = !selectedOutletId || record.user.outletId === selectedOutletId;
     const matchesSearch = !searchQuery || 
-      record.user.name.toLowerCase().includes(searchQuery.toLowerCase());
+      getDisplayName(record.user).toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (record.user.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (record.user.nickname || "").toLowerCase().includes(searchQuery.toLowerCase());
 
     return matchesTime && matchesOutlet && matchesSearch;
   });
 
   const exportData = filteredData.map(record => ({
     Date: format(new Date(record.date), "yyyy-MM-dd"),
-    Employee: record.user.name,
+    Employee: getDisplayName(record.user),
     Phone: record.user.phone,
     Outlet: record.user.outlet?.name || "N/A",
     "Check In": record.checkIn ? format(new Date(record.checkIn), "HH:mm") : "-",
@@ -137,7 +140,7 @@ export default function SupervisorReportClient({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search name..."
+                placeholder="Search name / nickname..."
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
               />
             </div>
@@ -175,10 +178,13 @@ export default function SupervisorReportClient({
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 font-bold text-xs">
-                          {record.user.name[0]}
+                          {getInitials(record.user)}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-900 dark:text-white">{record.user.name}</p>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white">{getDisplayName(record.user)}</p>
+                          {getSecondaryName(record.user) && (
+                            <p className="text-[11px] text-slate-500">{getSecondaryName(record.user)}</p>
+                          )}
                           {reportType === "MONTHLY" && (
                             <p className="text-[10px] text-slate-500 font-bold">{format(new Date(record.date), "MMM d, yyyy")}</p>
                           )}

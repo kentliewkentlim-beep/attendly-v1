@@ -25,6 +25,7 @@ import {
   endOfWeek,
   subWeeks
 } from "date-fns";
+import { getDisplayName, getInitials } from "@/lib/displayName";
 
 export default function SupervisorRosterClient({ 
   staff, 
@@ -225,10 +226,10 @@ export default function SupervisorRosterClient({
                   <td className="sticky left-0 z-10 bg-white dark:bg-slate-900 px-6 py-3 whitespace-nowrap border-r border-slate-100 dark:border-slate-800 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
                     <div className="flex items-center gap-3">
                       <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 font-bold text-[10px]">
-                        {member.name[0]}
+                        {getInitials(member)}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{member.name}</p>
+                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{getDisplayName(member)}</p>
                         <p className="text-[9px] text-slate-400 font-bold uppercase truncate">{member.department}</p>
                       </div>
                     </div>
