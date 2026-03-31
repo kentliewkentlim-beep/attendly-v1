@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import LocalDateInput from "@/components/LocalDateInput";
 import { headers } from "next/headers";
+import { getShortName } from "@/lib/displayName";
 
 export default async function StaffDashboard() {
   const hdrs = await headers();
@@ -167,7 +168,7 @@ export default async function StaffDashboard() {
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-              {getGreeting()}, {user.name.split(' ')[0]}!
+              {getGreeting()}, {getShortName(user)}!
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <span className={`status-badge ${status.color} px-3 py-1 text-xs font-black uppercase tracking-widest`}>

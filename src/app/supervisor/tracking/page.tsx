@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import SupervisorTrackingClient from "./SupervisorTrackingClient";
 import { format, startOfDay } from "date-fns";
+import { getDisplayName } from "@/lib/displayName";
 
 export default async function SupervisorTrackingPage() {
   const user = await getCurrentUser();
@@ -45,7 +46,7 @@ export default async function SupervisorTrackingPage() {
     .filter(a => a.isLate)
     .map(a => ({
       type: "LATE",
-      message: `${a.user.name} clocked in late today`,
+      message: `${getDisplayName(a.user as any)} clocked in late today`,
       time: a.checkIn ? format(new Date(a.checkIn), "HH:mm") : ""
     }));
 

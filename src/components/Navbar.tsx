@@ -19,6 +19,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useState } from "react";
+import { getDisplayName } from "@/lib/displayName";
 
 export default function Navbar({ user }: { user: any }) {
   const pathname = usePathname();
@@ -69,6 +70,7 @@ export default function Navbar({ user }: { user: any }) {
 
   const primaryItems = menuItems.slice(0, 3);
   const moreItems = menuItems.slice(3);
+  const displayName = getDisplayName(user);
 
   return (
     <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
@@ -133,7 +135,7 @@ export default function Navbar({ user }: { user: any }) {
           <div className="flex items-center">
             <div className="hidden sm:flex items-center space-x-4">
               <div className="flex flex-col items-end">
-                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{user.name}</span>
+                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{displayName}</span>
                 <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tighter">
                   {user.role} • {user.department}
                 </span>
@@ -215,7 +217,7 @@ export default function Navbar({ user }: { user: any }) {
               )}
             </div>
             <div className="ml-3">
-              <div className="text-base font-medium text-slate-800 dark:text-slate-200">{user.name}</div>
+              <div className="text-base font-medium text-slate-800 dark:text-slate-200">{displayName}</div>
               <div className="text-sm font-medium text-slate-500">{user.role} • {user.department}</div>
             </div>
           </div>

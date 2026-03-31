@@ -14,6 +14,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import { format } from "date-fns";
+import { getDisplayName, getInitials, getSecondaryName } from "@/lib/displayName";
 
 export default function SupervisorTrackingClient({ 
   staff,
@@ -28,7 +29,9 @@ export default function SupervisorTrackingClient({
   const [activeTab, setActiveTab] = useState<"LIST" | "MAP">("LIST");
 
   const filteredStaff = staff.filter(s => 
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    getDisplayName(s).toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (s.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (s.nickname || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.phone.includes(searchQuery)
   );
 
@@ -131,7 +134,7 @@ export default function SupervisorTrackingClient({
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search staff name or phone..."
+                    placeholder="Search name, nickname, phone..."
                     className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                   />
                 </div>
@@ -159,10 +162,13 @@ export default function SupervisorTrackingClient({
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 font-bold text-xs">
-                                  {member.name[0]}
+                                  {getInitials(member)}
                                 </div>
                                 <div>
-                                  <p className="text-sm font-bold text-slate-900 dark:text-white">{member.name}</p>
+                                  <p className="text-sm font-bold text-slate-900 dark:text-white">{getDisplayName(member)}</p>
+                                  {getSecondaryName(member) && (
+                                    <p className="text-[11px] text-slate-500">{getSecondaryName(member)}</p>
+                                  )}
                                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{member.department}</p>
                                 </div>
                               </div>
@@ -214,7 +220,7 @@ export default function SupervisorTrackingClient({
                 {staff.slice(0, 4).map(s => (
                   <div key={s.id} className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="text-[10px] font-bold text-slate-600">{s.name} (Active)</span>
+                    <span className="text-[10px] font-bold text-slate-600">{getDisplayName(s)} (Active)</span>
                   </div>
                 ))}
               </div>

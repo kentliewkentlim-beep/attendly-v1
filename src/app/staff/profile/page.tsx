@@ -20,6 +20,7 @@ import BackButton from "@/components/BackButton";
 import { revalidatePath } from "next/cache";
 import { getSupabaseServiceClient } from "@/lib/supabase";
 import AvatarUploader from "@/components/AvatarUploader";
+import { getDisplayName, getSecondaryName } from "@/lib/displayName";
 
 export default async function StaffProfilePage() {
   const currentUser = await getCurrentUser();
@@ -68,6 +69,8 @@ export default async function StaffProfilePage() {
     avatar
       ? `${avatar}${avatar.includes("?") ? "&" : "?"}v=${user.updatedAt.getTime()}`
       : `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user.name)}`;
+  const displayName = getDisplayName(user as any);
+  const secondaryName = getSecondaryName(user as any);
 
   return (
     <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -83,7 +86,10 @@ export default async function StaffProfilePage() {
                 onUpload={handleUpload}
               />
             </div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white">{user.name}</h1>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white">{displayName}</h1>
+            {secondaryName && (
+              <p className="text-xs font-bold text-slate-500 mt-1">{secondaryName}</p>
+            )}
             <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mt-1">{user.role}</p>
             
             <div className="mt-6 flex flex-wrap justify-center gap-4">

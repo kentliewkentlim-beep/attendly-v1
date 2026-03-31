@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { AutoSubmit } from "@/components/AutoSubmit";
+import { getDisplayName, getInitials, getSecondaryName } from "@/lib/displayName";
 
 export default function SupervisorStaffClient({ 
   staff,
@@ -38,8 +39,11 @@ export default function SupervisorStaffClient({
     if (isLate) status = "Late";
     if (isOnLeave) status = "On Leave";
 
-    const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         member.phone.includes(searchQuery);
+    const matchesSearch =
+      getDisplayName(member).toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (member.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (member.nickname || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.phone.includes(searchQuery);
     const matchesStatus = !statusFilter || status === statusFilter;
 
     return matchesSearch && matchesStatus;
@@ -127,10 +131,13 @@ export default function SupervisorStaffClient({
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 font-bold text-sm">
-                            {member.name[0]}
+                            {getInitials(member)}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white">{member.name}</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">{getDisplayName(member)}</p>
+                            {getSecondaryName(member) && (
+                              <p className="text-[11px] text-slate-500">{getSecondaryName(member)}</p>
+                            )}
                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{member.department}</p>
                           </div>
                         </div>
