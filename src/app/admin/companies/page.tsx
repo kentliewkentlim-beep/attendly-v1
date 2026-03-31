@@ -16,7 +16,8 @@ export default async function CompaniesPage() {
           _count: {
             select: { users: true }
           }
-        }
+        },
+        orderBy: { name: "asc" }
       },
       users: {
         where: { role: "SUPERVISOR" }
