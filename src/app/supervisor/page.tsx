@@ -23,6 +23,7 @@ import {
 import { format, startOfDay } from "date-fns";
 import Link from "next/link";
 import { AutoSubmit } from "@/components/AutoSubmit";
+import { getAllowedOutletIds } from "@/lib/supervisorOutlets";
 
 export default async function SupervisorDashboard({
   searchParams,
@@ -33,12 +34,25 @@ export default async function SupervisorDashboard({
   const user = await getCurrentUser();
   if (!user || (user.role !== "SUPERVISOR" && user.role !== "ADMIN")) redirect("/staff");
 
-  const selectedOutletId = params.outletId || user.outletId || "";
-
-  const outlets = await prisma.outlet.findMany({
+  const companyOutlets = await prisma.outlet.findMany({
     where: { companyId: user.companyId },
     orderBy: { name: "asc" },
   });
+  const allowedOutletIds = getAllowedOutletIds(user as any, companyOutlets.map((o) => o.id));
+  const requestedOutletId = params.outletId || "";
+  const selectedOutletId = allowedOutletIds.includes(requestedOutletId)
+    ? requestedOutletId
+    : allowedOutletIds.length === 1
+      ? allowedOutletIds[0]
+      : "";
+
+  const outlets = companyOutlets.filter((o) => allowedOutletIds.includes(o.id));
+  const outletWhere =
+    selectedOutletId
+      ? { outletId: selectedOutletId }
+      : allowedOutletIds.length > 0
+        ? { outletId: { in: allowedOutletIds } }
+        : {};
 
   const todayStr = format(new Date(), "yyyy-MM-dd");
 
@@ -46,7 +60,7 @@ export default async function SupervisorDashboard({
     where: { 
       companyId: user.companyId, 
       role: "STAFF",
-      ...(selectedOutletId ? { outletId: selectedOutletId } : {})
+      ...outletWhere
     },
     include: { 
       rosters: { 
@@ -66,7 +80,7 @@ export default async function SupervisorDashboard({
       date: todayStr,
       user: { 
         companyId: user.companyId,
-        ...(selectedOutletId ? { outletId: selectedOutletId } : {})
+        ...outletWhere
       }
     },
     include: { user: true }
@@ -79,7 +93,7 @@ export default async function SupervisorDashboard({
       endDate: { gte: new Date() },
       user: { 
         companyId: user.companyId,
-        ...(selectedOutletId ? { outletId: selectedOutletId } : {})
+        ...outletWhere
       }
     }
   });
@@ -88,7 +102,7 @@ export default async function SupervisorDashboard({
     where: { 
       user: { 
         companyId: user.companyId,
-        ...(selectedOutletId ? { outletId: selectedOutletId } : {})
+        ...outletWhere
       }, 
       status: "PENDING" 
     },

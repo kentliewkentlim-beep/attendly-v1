@@ -4,16 +4,23 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import SupervisorLeaveClient from "./SupervisorLeaveClient";
 import { differenceInDays } from "date-fns";
+import { getAllowedOutletIds } from "@/lib/supervisorOutlets";
 
 export default async function SupervisorLeavePage() {
   const user = await getCurrentUser();
   if (!user || (user.role !== "SUPERVISOR" && user.role !== "ADMIN")) redirect("/staff");
 
+  const companyOutlets = await prisma.outlet.findMany({
+    where: { companyId: user.companyId },
+    select: { id: true },
+  });
+  const allowedOutletIds = getAllowedOutletIds(user as any, companyOutlets.map((o) => o.id));
+
   const staff = await prisma.user.findMany({
     where: { 
       companyId: user.companyId,
       role: "STAFF",
-      ...(user.outletId ? { outletId: user.outletId } : {})
+      ...(allowedOutletIds.length > 0 ? { outletId: { in: allowedOutletIds } } : {})
     },
     include: {
       leaves: {
@@ -31,7 +38,7 @@ export default async function SupervisorLeavePage() {
     where: {
       user: {
         companyId: user.companyId,
-        ...(user.outletId ? { outletId: user.outletId } : {})
+        ...(allowedOutletIds.length > 0 ? { outletId: { in: allowedOutletIds } } : {})
       }
     },
     include: {

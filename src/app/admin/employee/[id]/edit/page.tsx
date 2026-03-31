@@ -17,7 +17,13 @@ export default async function EmployeeEditPage({
   if (!employee) notFound();
 
   const companies = await prisma.company.findMany({ orderBy: { name: "asc" } });
-  const outlets = await prisma.outlet.findMany({ orderBy: { name: "asc" } });
+  const outlets = await prisma.outlet.findMany({ where: { companyId: employee.companyId }, orderBy: { name: "asc" } });
+  const supervisorOutletRows = await (prisma as any).supervisorOutlet
+    .findMany({
+      where: { supervisorId: employee.id },
+    })
+    .catch(() => []);
+  const supervisorOutletIds = new Set<string>(supervisorOutletRows.map((r: any) => r.outletId));
 
   async function save(formData: FormData) {
     "use server";
@@ -32,6 +38,9 @@ export default async function EmployeeEditPage({
     const status = (formData.get("status") as string) || "ACTIVE";
     const companyId = (formData.get("companyId") as string) || "";
     const outletId = (formData.get("outletId") as string) || "";
+    const selectedSupervisorOutletIds = formData
+      .getAll("supervisorOutletIds")
+      .map((v) => String(v));
 
     await prisma.user.update({
       where: { id },
@@ -48,6 +57,36 @@ export default async function EmployeeEditPage({
         outletId: outletId || null,
       },
     });
+
+    if (role === "SUPERVISOR") {
+      const validOutlets = await prisma.outlet.findMany({
+        where: {
+          companyId,
+          id: { in: selectedSupervisorOutletIds },
+        },
+        select: { id: true },
+      });
+
+      await (prisma as any).supervisorOutlet.deleteMany({
+        where: { supervisorId: id },
+      });
+
+      if (validOutlets.length > 0) {
+        await (prisma as any).supervisorOutlet.createMany({
+          data: validOutlets.map((o: any) => ({
+            supervisorId: id,
+            outletId: o.id,
+          })),
+          skipDuplicates: true,
+        });
+      }
+    } else {
+      await (prisma as any).supervisorOutlet
+        .deleteMany({
+          where: { supervisorId: id },
+        })
+        .catch(() => {});
+    }
 
     redirect(`/admin/employee/${id}`);
   }
@@ -186,6 +225,32 @@ export default async function EmployeeEditPage({
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+              Supervisor Controlled Outlets
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {outlets.map((o) => (
+                <label
+                  key={o.id}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                >
+                  <input
+                    type="checkbox"
+                    name="supervisorOutletIds"
+                    value={o.id}
+                    defaultChecked={supervisorOutletIds.has(o.id)}
+                    className="h-4 w-4"
+                  />
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{o.name}</span>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-slate-500 font-medium">
+              Used only when Role is Supervisor. Leave empty to allow the supervisor to see all outlets in the company.
+            </p>
           </div>
 
           <div className="space-y-2">

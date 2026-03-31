@@ -4,18 +4,24 @@ import { redirect } from "next/navigation";
 import SupervisorTrackingClient from "./SupervisorTrackingClient";
 import { format, startOfDay } from "date-fns";
 import { getDisplayName } from "@/lib/displayName";
+import { getAllowedOutletIds } from "@/lib/supervisorOutlets";
 
 export default async function SupervisorTrackingPage() {
   const user = await getCurrentUser();
   if (!user || (user.role !== "SUPERVISOR" && user.role !== "ADMIN")) redirect("/staff");
 
   const todayStr = format(new Date(), "yyyy-MM-dd");
+  const companyOutlets = await prisma.outlet.findMany({
+    where: { companyId: user.companyId },
+    select: { id: true },
+  });
+  const allowedOutletIds = getAllowedOutletIds(user as any, companyOutlets.map((o) => o.id));
 
   const staff = await prisma.user.findMany({
     where: { 
       companyId: user.companyId,
       role: "STAFF",
-      ...(user.outletId ? { outletId: user.outletId } : {})
+      ...(allowedOutletIds.length > 0 ? { outletId: { in: allowedOutletIds } } : {})
     },
     include: {
       attendances: {
@@ -35,7 +41,7 @@ export default async function SupervisorTrackingPage() {
       date: todayStr,
       user: {
         companyId: user.companyId,
-        ...(user.outletId ? { outletId: user.outletId } : {})
+        ...(allowedOutletIds.length > 0 ? { outletId: { in: allowedOutletIds } } : {})
       }
     },
     include: { user: true }

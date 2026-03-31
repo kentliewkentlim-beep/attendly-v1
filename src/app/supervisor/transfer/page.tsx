@@ -3,16 +3,23 @@ import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import SupervisorTransferClient from "./SupervisorTransferClient";
+import { getAllowedOutletIds } from "@/lib/supervisorOutlets";
 
 export default async function SupervisorTransferPage() {
   const user = await getCurrentUser();
   if (!user || (user.role !== "SUPERVISOR" && user.role !== "ADMIN")) redirect("/staff");
 
+  const companyOutlets = await prisma.outlet.findMany({
+    where: { companyId: user.companyId },
+    select: { id: true },
+  });
+  const allowedOutletIds = getAllowedOutletIds(user as any, companyOutlets.map((o) => o.id));
+
   const myStaff = await prisma.user.findMany({
     where: { 
       companyId: user.companyId,
       role: "STAFF",
-      ...(user.outletId ? { outletId: user.outletId } : {})
+      ...(allowedOutletIds.length > 0 ? { outletId: { in: allowedOutletIds } } : {})
     },
     orderBy: { name: "asc" }
   });
@@ -21,15 +28,18 @@ export default async function SupervisorTransferPage() {
     where: { 
       companyId: user.companyId,
       role: "STAFF",
-      ...(user.outletId ? { outletId: { not: user.outletId } } : {})
+      ...(allowedOutletIds.length > 0 ? { outletId: { notIn: allowedOutletIds } } : {})
     },
     include: { outlet: true },
     orderBy: { name: "asc" }
   });
 
-  const activeTransfersWhere = user.outletId
+  const activeTransfersWhere = allowedOutletIds.length > 0
     ? {
-        OR: [{ fromOutletId: user.outletId }, { toOutletId: user.outletId }],
+        OR: [
+          { fromOutletId: { in: allowedOutletIds } },
+          { toOutletId: { in: allowedOutletIds } }
+        ],
         status: { not: "RETURNED" as const },
       }
     : {

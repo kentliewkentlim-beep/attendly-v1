@@ -34,13 +34,14 @@ export default async function AddEmployeePage() {
     const outletId = formData.get("outletId") as string;
     const department = formData.get("department") as string;
     const task = formData.get("task") as string;
+    const supervisorOutletIds = formData.getAll("supervisorOutletIds").map((v) => String(v));
 
     if (!name || !phone || !role || !companyId) {
       return;
     }
 
     try {
-      await prisma.user.create({
+      const created = await prisma.user.create({
         data: {
           name,
           nickname: nickname || null,
@@ -54,6 +55,19 @@ export default async function AddEmployeePage() {
           password: "1234", // Default password
         },
       });
+
+      if (role === "SUPERVISOR") {
+        const validOutlets = await prisma.outlet.findMany({
+          where: { companyId, id: { in: supervisorOutletIds } },
+          select: { id: true },
+        });
+        if (validOutlets.length > 0) {
+          await (prisma as any).supervisorOutlet.createMany({
+            data: validOutlets.map((o: any) => ({ supervisorId: created.id, outletId: o.id })),
+            skipDuplicates: true,
+          });
+        }
+      }
     } catch (error) {
       console.error("Failed to create employee:", error);
       return;
@@ -195,6 +209,26 @@ export default async function AddEmployeePage() {
                     ))}
                   </select>
                 </div>
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Supervisor Controlled Outlets</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {companies.flatMap((c) => c.outlets.map((o) => ({ ...o, companyName: c.name }))).map((o) => (
+                    <label
+                      key={o.id}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                    >
+                      <input type="checkbox" name="supervisorOutletIds" value={o.id} className="h-4 w-4" />
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                        {o.name} <span className="text-slate-400">({o.companyName})</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-500 font-medium">
+                  Used only when Role is Supervisor. Pick outlets under the selected company.
+                </p>
               </div>
 
               <div className="space-y-2">

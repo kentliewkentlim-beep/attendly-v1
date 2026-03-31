@@ -7,10 +7,24 @@ export async function getCurrentUser() {
 
   if (!userId) return null;
 
-  return await prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: { company: true },
+    include: {
+      company: true,
+      outlet: true,
+    },
   });
+  if (!user) return null;
+
+  try {
+    const supervisorOutlets = await (prisma as any).supervisorOutlet.findMany({
+      where: { supervisorId: user.id },
+      include: { outlet: true },
+    });
+    return { ...user, supervisorOutlets };
+  } catch {
+    return { ...user, supervisorOutlets: [] };
+  }
 }
 
 export async function login(userId: string) {
