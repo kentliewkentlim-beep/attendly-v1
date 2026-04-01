@@ -22,6 +22,7 @@ import {
   addWeeks, 
   subWeeks 
 } from "date-fns";
+import ExportButton from "@/components/ExportButton";
 
 export default function RosterClient({ 
   companies,
@@ -35,8 +36,8 @@ export default function RosterClient({
   staff: any[]; 
   rosters: any[]; 
   shiftTemplates: any[];
-  onSaveRoster: (data: any[]) => Promise<void>;
-  onCopyRoster: (fromStart: string, toStart: string) => Promise<void>;
+  onSaveRoster: (payload: { companyId: string; weekStart: string; items: any[] }) => Promise<void>;
+  onCopyRoster: (payload: { companyId: string; fromStart: string; toStart: string }) => Promise<void>;
 }) {
   const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>(companies?.[0]?.id || "");
@@ -53,8 +54,12 @@ export default function RosterClient({
   const [localRosters, setLocalRosters] = useState<any[]>(normalizeRostersForCompany(selectedCompanyId));
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
+  const weekStartStr = format(currentWeekStart, "yyyy-MM-dd");
+  const weekDateSet = new Set(weekDays.map((d) => format(d, "yyyy-MM-dd")));
 
   type ShiftType = { name: string; color: string; dotColor?: string };
+  const filteredStaff = staff.filter((m: any) => m.companyId === selectedCompanyId);
+  const staffById = new Map(filteredStaff.map((s: any) => [s.id, s]));
   const handleShiftClick = (userId: string, date: Date) => {
     const dateStr = format(date, "yyyy-MM-dd");
     const existingIndex = localRosters.findIndex((r) => r.userId === userId && r.date === dateStr);
@@ -67,7 +72,8 @@ export default function RosterClient({
         newRosters[existingIndex] = { ...newRosters[existingIndex], shift: selectedShift };
       }
     } else {
-      newRosters.push({ userId, date: dateStr, shift: selectedShift });
+      const staffMember = staffById.get(userId);
+      newRosters.push({ userId, date: dateStr, shift: selectedShift, outletId: staffMember?.outletId || null });
     }
     setLocalRosters(newRosters);
   };
@@ -79,14 +85,19 @@ export default function RosterClient({
 
   const handleSave = async () => {
     setIsSaving(true);
-    await onSaveRoster(localRosters);
+    const items = localRosters.filter((r) => weekDateSet.has(r.date));
+    await onSaveRoster({ companyId: selectedCompanyId, weekStart: weekStartStr, items });
     setIsSaving(false);
   };
 
   const handleCopyLastWeek = async () => {
     if (confirm("Copy roster from last week to this week?")) {
       const lastWeekStart = subWeeks(currentWeekStart, 1);
-      await onCopyRoster(format(lastWeekStart, "yyyy-MM-dd"), format(currentWeekStart, "yyyy-MM-dd"));
+      await onCopyRoster({
+        companyId: selectedCompanyId,
+        fromStart: format(lastWeekStart, "yyyy-MM-dd"),
+        toStart: weekStartStr,
+      });
     }
   };
 
@@ -103,8 +114,6 @@ export default function RosterClient({
     { name: "Leave", color: "bg-red-100 text-red-700 border-red-200", dotColor: "#ef4444" },
   ];
 
-  const filteredStaff = staff.filter((m: any) => m.companyId === selectedCompanyId);
-
   // When company changes, reset local rosters to that company
   function handleCompanyChange(id: string) {
     setSelectedCompanyId(id);
@@ -112,6 +121,23 @@ export default function RosterClient({
     const firstTemplate = shiftTemplates.find((t: any) => t.companyId === id);
     setSelectedShift(firstTemplate?.name || "Off");
   }
+
+  const exportRows = filteredStaff
+    .flatMap((m: any) =>
+      weekDays.map((d) => {
+        const dateStr = format(d, "yyyy-MM-dd");
+        const roster = localRosters.find((r) => r.userId === m.id && r.date === dateStr);
+        return {
+          Date: dateStr,
+          Company: m.company?.name || "",
+          Outlet: m.outlet?.name || "",
+          Employee: m.name || "",
+          Phone: m.phone || "",
+          Shift: roster?.shift || "",
+        };
+      })
+    )
+    .filter((r) => r.Shift);
 
   return (
     <div className="space-y-8">
@@ -124,6 +150,10 @@ export default function RosterClient({
           <p className="text-slate-500 mt-1 font-medium">Plan and assign weekly staff schedules</p>
         </div>
         <div className="flex flex-wrap gap-3">
+          <ExportButton
+            data={exportRows}
+            filename={`roster_${weekStartStr}_${selectedCompanyId}`}
+          />
           <button 
             onClick={handleCopyLastWeek}
             className="btn-secondary h-11 px-6 border-slate-200 dark:border-slate-700 flex items-center gap-2"

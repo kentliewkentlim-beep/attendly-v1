@@ -22,42 +22,70 @@ export default async function AdminRosterPage() {
     include: { company: true }
   });
 
-  async function handleSaveRoster(data: any[]) {
+  async function handleSaveRoster(payload: { companyId: string; weekStart: string; items: any[] }) {
     "use server";
-    
-    // We'll perform a sync: delete existing for the dates in data, then re-insert
-    // For simplicity in this demo, we'll update based on userId and date
-    for (const item of data) {
+
+
+    const companyId = String(payload.companyId);
+    const weekStartStr = String(payload.weekStart);
+    const startDate = new Date(`${weekStartStr}T00:00:00.000Z`);
+    const endDate = addDays(startDate, 6);
+
+    const userIds = (
+      await prisma.user.findMany({
+        where: { companyId, role: { not: "ADMIN" } },
+        select: { id: true },
+      })
+    ).map((u) => u.id);
+
+    await prisma.roster.deleteMany({
+      where: {
+        userId: { in: userIds },
+        date: { gte: startDate, lte: endDate },
+      },
+    });
+
+    const items = (payload.items || []).map((item: any) => {
       const dateStr = String(item.date);
       const date = new Date(`${dateStr}T00:00:00.000Z`);
+      return {
+        id: `roster-${item.userId}-${dateStr}`,
+        userId: item.userId,
+        date,
+        shift: item.shift,
+        outletId: item.outletId || null,
+        location: item.location || null,
+      };
+    });
 
-      await prisma.roster.upsert({
-        where: {
-          id: item.id || `roster-${item.userId}-${dateStr}`
-        },
-        update: {
-          shift: item.shift,
-          date: date
-        },
-        create: {
-          id: `roster-${item.userId}-${dateStr}`,
-          userId: item.userId,
-          date: date,
-          shift: item.shift
-        }
-      });
+    if (items.length > 0) {
+      await prisma.roster.createMany({ data: items, skipDuplicates: true });
     }
+
     revalidatePath("/admin/roster");
   }
 
-  async function handleCopyRoster(fromStart: string, toStart: string) {
+  async function handleCopyRoster(payload: { companyId: string; fromStart: string; toStart: string }) {
     "use server";
-    
+
+    const companyId = String(payload.companyId);
+    const fromStart = String(payload.fromStart);
+    const toStart = String(payload.toStart);
+
     const fromStartDate = new Date(`${fromStart}T00:00:00.000Z`);
     const toStartDate = new Date(`${toStart}T00:00:00.000Z`);
     const fromEnd = addDays(fromStartDate, 6);
+
+    const userIds = (
+      await prisma.user.findMany({
+        where: { companyId, role: { not: "ADMIN" } },
+        select: { id: true },
+      })
+    ).map((u) => u.id);
+
     const lastWeekRosters = await prisma.roster.findMany({
       where: {
+        userId: { in: userIds },
         date: {
           gte: fromStartDate,
           lte: fromEnd
@@ -65,27 +93,31 @@ export default async function AdminRosterPage() {
       }
     });
 
-    for (const oldRoster of lastWeekRosters) {
+    const toEnd = addDays(toStartDate, 6);
+    await prisma.roster.deleteMany({
+      where: {
+        userId: { in: userIds },
+        date: { gte: toStartDate, lte: toEnd },
+      },
+    });
+
+    const items = lastWeekRosters.map((oldRoster) => {
       const daysDiff = differenceInCalendarDays(oldRoster.date, fromStartDate);
       const newDate = addDays(toStartDate, daysDiff);
       newDate.setUTCHours(0, 0, 0, 0);
       const newDateStr = format(newDate, "yyyy-MM-dd");
+      return {
+        id: `roster-${oldRoster.userId}-${newDateStr}`,
+        userId: oldRoster.userId,
+        date: newDate,
+        shift: oldRoster.shift,
+        outletId: oldRoster.outletId || null,
+        location: oldRoster.location || null,
+      };
+    });
 
-      await prisma.roster.upsert({
-        where: {
-          id: `roster-${oldRoster.userId}-${newDateStr}`
-        },
-        update: {
-          shift: oldRoster.shift,
-          date: newDate
-        },
-        create: {
-          id: `roster-${oldRoster.userId}-${newDateStr}`,
-          userId: oldRoster.userId,
-          date: newDate,
-          shift: oldRoster.shift
-        }
-      });
+    if (items.length > 0) {
+      await prisma.roster.createMany({ data: items, skipDuplicates: true });
     }
     revalidatePath("/admin/roster");
   }

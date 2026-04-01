@@ -26,35 +26,56 @@ import {
   subWeeks
 } from "date-fns";
 import { getDisplayName, getInitials } from "@/lib/displayName";
+import ExportButton from "@/components/ExportButton";
 
 export default function SupervisorRosterClient({ 
   staff, 
   rosters,
+  shiftTemplates,
   onSaveRoster,
   onCopyRoster
 }: { 
   staff: any[]; 
   rosters: any[];
-  onSaveRoster: (data: any[]) => Promise<void>;
-  onCopyRoster: (fromStart: Date, toStart: Date) => Promise<void>;
+  shiftTemplates: any[];
+  onSaveRoster: (payload: { staffIds: string[]; monthStart: string; monthEnd: string; items: any[] }) => Promise<void>;
+  onCopyRoster: (payload: { staffIds: string[]; fromStart: string; toStart: string }) => Promise<void>;
 }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedShift, setSelectedShift] = useState<string>("Day");
+  const [selectedShift, setSelectedShift] = useState<string>(shiftTemplates?.[0]?.name || "Off");
   const [isSaving, setIsSaving] = useState(false);
-  const [localRosters, setLocalRosters] = useState<any[]>(rosters);
+  const [localRosters, setLocalRosters] = useState<any[]>(
+    (rosters || []).map((r: any) => ({ ...r, date: format(new Date(r.date), "yyyy-MM-dd") }))
+  );
   const [selectedCells, setSelectedCells] = useState<string[]>([]); // "userId-date"
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const monthStartStr = format(monthStart, "yyyy-MM-dd");
+  const monthEndStr = format(monthEnd, "yyyy-MM-dd");
+  const monthDateSet = new Set(daysInMonth.map((d) => format(d, "yyyy-MM-dd")));
 
   const shiftTypes = [
-    { name: "Day", color: "bg-blue-100 text-blue-700 border-blue-200" },
-    { name: "Evening", color: "bg-purple-100 text-purple-700 border-purple-200" },
-    { name: "Full", color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-    { name: "Off", color: "bg-slate-100 text-slate-700 border-slate-200" },
-    { name: "Leave", color: "bg-red-100 text-red-700 border-red-200" },
+    ...(shiftTemplates || []).map((t: any) => ({
+      name: t.name,
+      color: "bg-blue-100 text-blue-700 border-blue-200",
+      dotColor: t.color || "#2563eb",
+    })),
+    { name: "Off", color: "bg-slate-100 text-slate-700 border-slate-200", dotColor: "#64748b" },
+    { name: "Leave", color: "bg-red-100 text-red-700 border-red-200", dotColor: "#ef4444" },
   ];
+
+  const staffById = new Map(staff.map((s: any) => [s.id, s]));
+
+  const getShiftAbbrev = (name: string) => {
+    const t = name.trim().toUpperCase();
+    if (t === "OFF") return "OFF";
+    if (t === "LEAVE") return "LV";
+    const parts = t.split(/\s+/).filter(Boolean);
+    const initials = parts.map((p) => p[0]).join("");
+    return (initials || t.slice(0, 2)).slice(0, 3);
+  };
 
   const handleCellClick = (userId: string, date: Date, e: React.MouseEvent) => {
     const dateStr = format(date, "yyyy-MM-dd");
@@ -67,7 +88,7 @@ export default function SupervisorRosterClient({
       );
     } else {
       // Direct assign
-      const existingIndex = localRosters.findIndex(r => r.userId === userId && format(new Date(r.date), "yyyy-MM-dd") === dateStr);
+      const existingIndex = localRosters.findIndex((r) => r.userId === userId && r.date === dateStr);
       let newRosters = [...localRosters];
       if (existingIndex > -1) {
         if (newRosters[existingIndex].shift === selectedShift) {
@@ -76,7 +97,8 @@ export default function SupervisorRosterClient({
           newRosters[existingIndex] = { ...newRosters[existingIndex], shift: selectedShift };
         }
       } else {
-        newRosters.push({ userId, date, shift: selectedShift });
+        const member = staffById.get(userId);
+        newRosters.push({ userId, date: dateStr, shift: selectedShift, outletId: member?.outletId || null });
       }
       setLocalRosters(newRosters);
       setSelectedCells([]);
@@ -88,14 +110,15 @@ export default function SupervisorRosterClient({
     
     let newRosters = [...localRosters];
     selectedCells.forEach(cellKey => {
-      const [userId, dateStr] = cellKey.split('-');
-      const date = new Date(dateStr);
-      const existingIndex = newRosters.findIndex(r => r.userId === userId && format(new Date(r.date), "yyyy-MM-dd") === dateStr);
+      const [userId, ...rest] = cellKey.split("-");
+      const dateStr = rest.join("-");
+      const existingIndex = newRosters.findIndex((r) => r.userId === userId && r.date === dateStr);
       
       if (existingIndex > -1) {
         newRosters[existingIndex] = { ...newRosters[existingIndex], shift: selectedShift };
       } else {
-        newRosters.push({ userId, date, shift: selectedShift });
+        const member = staffById.get(userId);
+        newRosters.push({ userId, date: dateStr, shift: selectedShift, outletId: member?.outletId || null });
       }
     });
     
@@ -105,7 +128,13 @@ export default function SupervisorRosterClient({
 
   const handleSave = async () => {
     setIsSaving(true);
-    await onSaveRoster(localRosters);
+    const items = localRosters.filter((r) => monthDateSet.has(r.date));
+    await onSaveRoster({
+      staffIds: staff.map((s: any) => s.id),
+      monthStart: monthStartStr,
+      monthEnd: monthEndStr,
+      items,
+    });
     setIsSaving(false);
   };
 
@@ -113,9 +142,29 @@ export default function SupervisorRosterClient({
     if (confirm("Copy roster from last week? This will overwrite existing shifts for the current view's first 7 days.")) {
       const firstDay = daysInMonth[0];
       const prevWeekStart = subWeeks(firstDay, 1);
-      await onCopyRoster(prevWeekStart, firstDay);
+      await onCopyRoster({
+        staffIds: staff.map((s: any) => s.id),
+        fromStart: format(prevWeekStart, "yyyy-MM-dd"),
+        toStart: format(firstDay, "yyyy-MM-dd"),
+      });
     }
   };
+
+  const exportRows = staff
+    .flatMap((m: any) =>
+      daysInMonth.map((d) => {
+        const dateStr = format(d, "yyyy-MM-dd");
+        const roster = localRosters.find((r) => r.userId === m.id && r.date === dateStr);
+        return {
+          Date: dateStr,
+          Outlet: m.outlet?.name || "",
+          Employee: getDisplayName(m),
+          Phone: m.phone || "",
+          Shift: roster?.shift || "",
+        };
+      })
+    )
+    .filter((r) => r.Shift);
 
   return (
     <div className="space-y-8">
@@ -128,6 +177,7 @@ export default function SupervisorRosterClient({
           <p className="text-slate-500 mt-1 font-medium">Plan staff schedules for {format(currentMonth, "MMMM yyyy")}</p>
         </div>
         <div className="flex flex-wrap gap-3">
+          <ExportButton data={exportRows} filename={`supervisor_roster_${monthStartStr}`} />
           <button 
             onClick={handleCopyPrevious}
             className="btn-secondary h-11 px-6 border-slate-200 dark:border-slate-700 flex items-center gap-2"
@@ -193,7 +243,7 @@ export default function SupervisorRosterClient({
                     : "bg-white dark:bg-slate-900 text-slate-400 border-slate-100 dark:border-slate-800"
                 }`}
               >
-                <div className={`w-2 h-2 rounded-full ${type.color.split(' ')[0]}`} />
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: (type as any).dotColor || "#2563eb" }} />
                 {type.name}
               </button>
             ))}
@@ -237,7 +287,7 @@ export default function SupervisorRosterClient({
                   {daysInMonth.map((day) => {
                     const dateStr = format(day, "yyyy-MM-dd");
                     const cellKey = `${member.id}-${dateStr}`;
-                    const roster = localRosters.find(r => r.userId === member.id && format(new Date(r.date), "yyyy-MM-dd") === dateStr);
+                    const roster = localRosters.find((r) => r.userId === member.id && r.date === dateStr);
                     const isSelected = selectedCells.includes(cellKey);
                     const shiftType = shiftTypes.find(t => t.name === roster?.shift);
 
@@ -252,7 +302,7 @@ export default function SupervisorRosterClient({
                         <div className={`h-8 w-full rounded-lg flex items-center justify-center text-[9px] font-black uppercase transition-all ${
                           roster ? shiftType?.color : 'hover:bg-slate-50'
                         }`}>
-                          {roster ? roster.shift[0] : ""}
+                          {roster ? getShiftAbbrev(roster.shift) : ""}
                         </div>
                       </td>
                     );
@@ -271,7 +321,7 @@ export default function SupervisorRosterClient({
           <div className="flex flex-wrap gap-4">
             {shiftTypes.map(type => (
               <div key={type.name} className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${type.color.split(' ')[0]}`} />
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: (type as any).dotColor || "#2563eb" }} />
                 <span className="text-xs font-bold text-slate-600 dark:text-slate-400">{type.name}</span>
               </div>
             ))}
