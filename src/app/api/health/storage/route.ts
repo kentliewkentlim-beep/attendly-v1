@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServiceClient } from "@/lib/supabase";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "ADMIN") {
+      return NextResponse.json({ ok: false, reason: "unauthorized" }, { status: 401 });
+    }
+
     const urlPresent = !!process.env.SUPABASE_URL;
     const keyPresent = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!urlPresent || !keyPresent) {
@@ -13,7 +19,6 @@ export async function GET() {
     }
 
     const supabase = getSupabaseServiceClient();
-    await supabase.storage.createBucket("avatars", { public: true }).catch(() => {});
     const buckets = await supabase.storage.listBuckets();
     const hasAvatars = (buckets.data ?? []).some((b: { name: string }) => b.name === "avatars");
 
