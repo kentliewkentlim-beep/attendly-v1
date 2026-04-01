@@ -208,6 +208,45 @@ export default async function SupervisorDashboard({
         </div>
       </div>
 
+      {/* My Controlled Outlets */}
+      <div className="card-base p-6 bg-white dark:bg-slate-900">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">My Controlled Outlets</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-white mt-2">
+              {(user as any).role === "ADMIN"
+                ? "Admin access (all outlets)"
+                : ((user as any).supervisorOutlets?.length ?? 0) > 0
+                  ? `${outlets.length} outlet${outlets.length === 1 ? "" : "s"} assigned`
+                  : user.outletId
+                    ? "Single outlet assigned"
+                    : "All outlets in company"}
+            </p>
+          </div>
+          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-600">
+            <Store size={18} />
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {outlets.length === 0 ? (
+            <span className="text-xs text-slate-500 font-medium">No outlets available</span>
+          ) : (
+            outlets.map((o) => (
+              <span
+                key={o.id}
+                className={`text-xs font-bold px-3 py-1.5 rounded-full border ${
+                  o.id === selectedOutletId
+                    ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-900/40"
+                    : "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800/50 dark:text-slate-300 dark:border-slate-700"
+                }`}
+              >
+                {o.name}
+              </span>
+            ))
+          )}
+        </div>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="card-base p-6 bg-white dark:bg-slate-900 border-l-4 border-emerald-500">
