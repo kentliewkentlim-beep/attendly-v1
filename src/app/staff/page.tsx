@@ -10,8 +10,12 @@ import Link from "next/link";
 import LocalDateInput from "@/components/LocalDateInput";
 import { headers } from "next/headers";
 import { getShortName } from "@/lib/displayName";
+import GpsAwareForm from "@/components/GpsAwareForm";
+import { haversineDistanceMeters, parseGpsFromForm } from "@/lib/geo";
 
-export default async function StaffDashboard() {
+export default async function StaffDashboard({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
+  const params = (await searchParams) || {};
+  const error = typeof params.error === "string" ? params.error : "";
   const hdrs = await headers();
   const tz = hdrs.get("x-vercel-ip-timezone") || "UTC";
   const nowLocal = new Date(
@@ -74,14 +78,42 @@ export default async function StaffDashboard() {
     const sessionUser = await getCurrentUser();
     if (!sessionUser) return;
     const localDate = (formData.get("localDate") as string) || format(new Date(), "yyyy-MM-dd");
+    const gps = parseGpsFromForm(formData);
+
+    const rosterForDay = await prisma.roster.findFirst({
+      where: {
+        userId: sessionUser.id,
+        date: {
+          gte: new Date(localDate),
+          lt: addDays(new Date(localDate), 1),
+        },
+      },
+      select: { outletId: true },
+    });
+    const targetOutletId = rosterForDay?.outletId || sessionUser.outletId || null;
+    if (targetOutletId) {
+      const outlet = await prisma.outlet.findUnique({
+        where: { id: targetOutletId },
+        select: { latitude: true, longitude: true, geofenceMeters: true },
+      });
+      const enforce = !!outlet?.latitude && !!outlet?.longitude && !!outlet?.geofenceMeters;
+      if (enforce) {
+        if (!gps.ok) redirect(`/staff?error=gps_required`);
+        const distance = haversineDistanceMeters(
+          { lat: gps.lat!, lng: gps.lng! },
+          { lat: outlet!.latitude!, lng: outlet!.longitude! }
+        );
+        if (distance > (outlet!.geofenceMeters as number)) redirect(`/staff?error=gps_outside`);
+      }
+    }
     
     // Check if late based on roster (mock logic: 9:00 AM)
     const isLate = new Date().getHours() >= 9 && new Date().getMinutes() > 0;
 
     await prisma.attendance.upsert({
       where: { userId_date: { userId: sessionUser.id, date: localDate } },
-      update: { checkIn: new Date(), isLate },
-      create: { userId: sessionUser.id, date: localDate, checkIn: new Date(), isLate },
+      update: { checkIn: new Date(), isLate, checkInLat: gps.lat, checkInLng: gps.lng, checkInAccuracy: gps.accuracy },
+      create: { userId: sessionUser.id, date: localDate, checkIn: new Date(), isLate, checkInLat: gps.lat, checkInLng: gps.lng, checkInAccuracy: gps.accuracy },
     });
     revalidatePath("/staff");
   }
@@ -91,9 +123,10 @@ export default async function StaffDashboard() {
     const sessionUser = await getCurrentUser();
     if (!sessionUser) return;
     const localDate = (formData.get("localDate") as string) || format(new Date(), "yyyy-MM-dd");
+    const gps = parseGpsFromForm(formData);
     await prisma.attendance.update({
       where: { userId_date: { userId: sessionUser.id, date: localDate } },
-      data: { lunchStart: new Date() },
+      data: { lunchStart: new Date(), lunchStartLat: gps.lat, lunchStartLng: gps.lng, lunchStartAccuracy: gps.accuracy },
     });
     revalidatePath("/staff");
   }
@@ -103,9 +136,10 @@ export default async function StaffDashboard() {
     const sessionUser = await getCurrentUser();
     if (!sessionUser) return;
     const localDate = (formData.get("localDate") as string) || format(new Date(), "yyyy-MM-dd");
+    const gps = parseGpsFromForm(formData);
     await prisma.attendance.update({
       where: { userId_date: { userId: sessionUser.id, date: localDate } },
-      data: { lunchEnd: new Date() },
+      data: { lunchEnd: new Date(), lunchEndLat: gps.lat, lunchEndLng: gps.lng, lunchEndAccuracy: gps.accuracy },
     });
     revalidatePath("/staff");
   }
@@ -115,9 +149,10 @@ export default async function StaffDashboard() {
     const sessionUser = await getCurrentUser();
     if (!sessionUser) return;
     const localDate = (formData.get("localDate") as string) || format(new Date(), "yyyy-MM-dd");
+    const gps = parseGpsFromForm(formData);
     await prisma.attendance.update({
       where: { userId_date: { userId: sessionUser.id, date: localDate } },
-      data: { checkOut: new Date() },
+      data: { checkOut: new Date(), checkOutLat: gps.lat, checkOutLng: gps.lng, checkOutAccuracy: gps.accuracy },
     });
     revalidatePath("/staff");
   }
@@ -165,6 +200,15 @@ export default async function StaffDashboard() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <Navbar user={user} />
       <main className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        {error && (
+          <div className="card-base p-4 mb-6 border border-red-200 bg-red-50 text-red-700 font-bold text-sm">
+            {error === "gps_required"
+              ? "GPS permission is required for this outlet. Please allow location and try again."
+              : error === "gps_outside"
+                ? "You are outside the allowed outlet area. Please move closer to the outlet and try again."
+                : "Action failed. Please try again."}
+          </div>
+        )}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -224,41 +268,41 @@ export default async function StaffDashboard() {
 
                 <div className="flex justify-center py-4">
                   {!attendance?.checkIn ? (
-                    <form action={handleCheckIn} className="w-full">
+                    <GpsAwareForm action={handleCheckIn} captureGps={true} requireGps={true}>
                       <LocalDateInput />
                       <button type="submit" className="relative group/btn flex flex-col items-center justify-center w-48 h-48 mx-auto rounded-full bg-blue-600 hover:bg-blue-700 shadow-2xl shadow-blue-500/40 transition-all active:scale-95">
                         <div className="absolute inset-0 rounded-full border-4 border-white/20 scale-110 group-hover/btn:scale-125 transition-transform duration-500" />
                         <LogIn className="w-12 h-12 text-white mb-2" />
                         <span className="text-white font-black uppercase tracking-widest text-sm">Clock In</span>
                       </button>
-                    </form>
+                    </GpsAwareForm>
                   ) : !attendance.lunchStart ? (
-                    <form action={handleLunchStart} className="w-full">
+                    <GpsAwareForm action={handleLunchStart} captureGps={false}>
                       <LocalDateInput />
                       <button type="submit" className="relative group/btn flex flex-col items-center justify-center w-48 h-48 mx-auto rounded-full bg-orange-500 hover:bg-orange-600 shadow-2xl shadow-orange-500/40 transition-all active:scale-95">
                         <div className="absolute inset-0 rounded-full border-4 border-white/20 scale-110 group-hover/btn:scale-125 transition-transform duration-500" />
                         <Coffee className="w-12 h-12 text-white mb-2" />
                         <span className="text-white font-black uppercase tracking-widest text-sm">Start Lunch</span>
                       </button>
-                    </form>
+                    </GpsAwareForm>
                   ) : !attendance.lunchEnd ? (
-                    <form action={handleLunchEnd} className="w-full">
+                    <GpsAwareForm action={handleLunchEnd} captureGps={false}>
                       <LocalDateInput />
                       <button type="submit" className="relative group/btn flex flex-col items-center justify-center w-48 h-48 mx-auto rounded-full bg-emerald-500 hover:bg-emerald-600 shadow-2xl shadow-emerald-500/40 transition-all active:scale-95">
                         <div className="absolute inset-0 rounded-full border-4 border-white/20 scale-110 group-hover/btn:scale-125 transition-transform duration-500" />
                         <Coffee className="w-12 h-12 text-white mb-2" />
                         <span className="text-white font-black uppercase tracking-widest text-sm">End Lunch</span>
                       </button>
-                    </form>
+                    </GpsAwareForm>
                   ) : !attendance.checkOut ? (
-                    <form action={handleCheckOut} className="w-full">
+                    <GpsAwareForm action={handleCheckOut} captureGps={true}>
                       <LocalDateInput />
                       <button type="submit" className="relative group/btn flex flex-col items-center justify-center w-48 h-48 mx-auto rounded-full bg-slate-900 hover:bg-black shadow-2xl shadow-slate-900/40 transition-all active:scale-95">
                         <div className="absolute inset-0 rounded-full border-4 border-white/20 scale-110 group-hover/btn:scale-125 transition-transform duration-500" />
                         <LogOut className="w-12 h-12 text-white mb-2" />
                         <span className="text-white font-black uppercase tracking-widest text-sm">Clock Out</span>
                       </button>
-                    </form>
+                    </GpsAwareForm>
                   ) : (
                     <div className="flex flex-col items-center justify-center w-48 h-48 mx-auto rounded-full bg-emerald-50 dark:bg-emerald-900/20 border-4 border-emerald-100 dark:border-emerald-900/30">
                       <CheckCircle2 className="w-16 h-16 text-emerald-500" />

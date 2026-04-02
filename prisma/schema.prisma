@@ -49,6 +49,9 @@ model Outlet {
   name             String
   address          String?
   phone            String?
+  latitude         Float?
+  longitude        Float?
+  geofenceMeters   Int?
   company          Company           @relation(fields: [companyId], references: [id])
   companyId        String
   users            User[]
@@ -106,9 +109,21 @@ model Attendance {
   userId     String
   user       User      @relation(fields: [userId], references: [id])
   checkIn    DateTime?
+  checkInLat Float?
+  checkInLng Float?
+  checkInAccuracy Float?
   lunchStart DateTime?
+  lunchStartLat Float?
+  lunchStartLng Float?
+  lunchStartAccuracy Float?
   lunchEnd   DateTime?
+  lunchEndLat Float?
+  lunchEndLng Float?
+  lunchEndAccuracy Float?
   checkOut   DateTime?
+  checkOutLat Float?
+  checkOutLng Float?
+  checkOutAccuracy Float?
   isLate     Boolean   @default(false)
   date       String    // YYYY-MM-DD for easier querying
   createdAt  DateTime  @default(now())

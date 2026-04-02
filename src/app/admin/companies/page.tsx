@@ -55,7 +55,7 @@ export default async function CompaniesPage() {
     revalidatePath("/admin/companies");
   }
 
-  async function handleSaveOutlet(data: { id?: string; name: string; address?: string; phone?: string; companyId: string }) {
+  async function handleSaveOutlet(data: { id?: string; name: string; address?: string; phone?: string; latitude?: number | null; longitude?: number | null; geofenceMeters?: number | null; companyId: string }) {
     "use server";
     if (data.id) {
       await prisma.outlet.update({
@@ -63,7 +63,10 @@ export default async function CompaniesPage() {
         data: { 
           name: data.name,
           address: data.address,
-          phone: data.phone
+          phone: data.phone,
+          latitude: data.latitude ?? null,
+          longitude: data.longitude ?? null,
+          geofenceMeters: data.geofenceMeters ?? null,
         }
       });
     } else {
@@ -72,6 +75,9 @@ export default async function CompaniesPage() {
           name: data.name,
           address: data.address,
           phone: data.phone,
+          latitude: data.latitude ?? null,
+          longitude: data.longitude ?? null,
+          geofenceMeters: data.geofenceMeters ?? null,
           companyId: data.companyId
         }
       });

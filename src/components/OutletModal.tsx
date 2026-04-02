@@ -19,6 +19,9 @@ export default function OutletModal({
   const [name, setName] = useState(outlet?.name || "");
   const [address, setAddress] = useState(outlet?.address || "");
   const [phone, setPhone] = useState(outlet?.phone || "");
+  const [latitude, setLatitude] = useState<string>(outlet?.latitude?.toString?.() || "");
+  const [longitude, setLongitude] = useState<string>(outlet?.longitude?.toString?.() || "");
+  const [geofenceMeters, setGeofenceMeters] = useState<string>(outlet?.geofenceMeters?.toString?.() || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,6 +34,9 @@ export default function OutletModal({
       name, 
       address, 
       phone, 
+      latitude: latitude.trim() ? Number(latitude) : null,
+      longitude: longitude.trim() ? Number(longitude) : null,
+      geofenceMeters: geofenceMeters.trim() ? Number(geofenceMeters) : null,
       companyId 
     });
     setIsSubmitting(false);
@@ -105,6 +111,46 @@ export default function OutletModal({
                   className="block w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Latitude</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={latitude}
+                  onChange={(e) => setLatitude(e.target.value)}
+                  placeholder="e.g. 5.9782"
+                  className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Longitude</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={longitude}
+                  onChange={(e) => setLongitude(e.target.value)}
+                  placeholder="e.g. 116.0743"
+                  className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Geofence Radius (meters)</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={geofenceMeters}
+                onChange={(e) => setGeofenceMeters(e.target.value)}
+                placeholder="e.g. 200"
+                className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+              />
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2 ml-1">
+                If set with lat/lng, GPS check-in can be enforced.
+              </p>
             </div>
           </div>
 
