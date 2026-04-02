@@ -42,7 +42,7 @@ export default async function EmployeeEditPage({
       .getAll("supervisorOutletIds")
       .map((v) => String(v));
 
-    await prisma.user.update({
+    await (prisma as any).user.update({
       where: { id },
       data: {
         name,

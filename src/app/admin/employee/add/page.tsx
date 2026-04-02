@@ -1,6 +1,5 @@
 import prisma from "@/lib/prisma";
 import { 
-  UserPlus, 
   ArrowLeft, 
   Save, 
   Phone, 
@@ -41,7 +40,7 @@ export default async function AddEmployeePage() {
     }
 
     try {
-      const created = await prisma.user.create({
+      const created = await (prisma as any).user.create({
         data: {
           name,
           nickname: nickname || null,

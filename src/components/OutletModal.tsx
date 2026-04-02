@@ -23,24 +23,31 @@ export default function OutletModal({
   const [longitude, setLongitude] = useState<string>(outlet?.longitude?.toString?.() || "");
   const [geofenceMeters, setGeofenceMeters] = useState<string>(outlet?.geofenceMeters?.toString?.() || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string>("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
     
     setIsSubmitting(true);
-    await onSave({ 
-      id: outlet?.id, 
-      name, 
-      address, 
-      phone, 
-      latitude: latitude.trim() ? Number(latitude) : null,
-      longitude: longitude.trim() ? Number(longitude) : null,
-      geofenceMeters: geofenceMeters.trim() ? Number(geofenceMeters) : null,
-      companyId 
-    });
-    setIsSubmitting(false);
-    onClose();
+    setError("");
+    try {
+      await onSave({ 
+        id: outlet?.id, 
+        name, 
+        address, 
+        phone, 
+        latitude: latitude.trim() ? Number(latitude) : null,
+        longitude: longitude.trim() ? Number(longitude) : null,
+        geofenceMeters: geofenceMeters.trim() ? Number(geofenceMeters) : null,
+        companyId 
+      });
+      onClose();
+    } catch (e: any) {
+      setError(e?.message || "Failed to save outlet");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -68,6 +75,11 @@ export default function OutletModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          {error && (
+            <div className="p-3 rounded-2xl border border-red-200 bg-red-50 text-red-700 text-sm font-bold">
+              {error}
+            </div>
+          )}
           <div className="space-y-4">
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Outlet Name</label>

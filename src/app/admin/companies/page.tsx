@@ -3,28 +3,39 @@ import { revalidatePath } from "next/cache";
 import CompaniesClient from "./CompaniesClient";
 
 export default async function CompaniesPage() {
-  const companies = await prisma.company.findMany({
-    include: {
-      _count: {
-        select: {
-          users: true,
-          outlets: true,
+  const getCompanies = async (includeGps: boolean) =>
+    prisma.company.findMany({
+      include: {
+        _count: {
+          select: {
+            users: true,
+            outlets: true,
+          },
+        },
+        outlets: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            phone: true,
+            companyId: true,
+            ...(includeGps
+              ? { latitude: true, longitude: true, geofenceMeters: true }
+              : {}),
+            createdAt: true,
+            updatedAt: true,
+            _count: { select: { users: true } },
+          },
+          orderBy: { name: "asc" },
+        },
+        users: {
+          where: { role: "SUPERVISOR" },
         },
       },
-      outlets: {
-        include: {
-          _count: {
-            select: { users: true }
-          }
-        },
-        orderBy: { name: "asc" }
-      },
-      users: {
-        where: { role: "SUPERVISOR" }
-      }
-    },
-    orderBy: { createdAt: "desc" }
-  });
+      orderBy: { createdAt: "desc" },
+    });
+
+  const companies = await getCompanies(true).catch(async () => await getCompanies(false));
 
   async function handleSaveCompany(data: { id?: string; name: string }) {
     "use server";
@@ -57,30 +68,55 @@ export default async function CompaniesPage() {
 
   async function handleSaveOutlet(data: { id?: string; name: string; address?: string; phone?: string; latitude?: number | null; longitude?: number | null; geofenceMeters?: number | null; companyId: string }) {
     "use server";
-    if (data.id) {
-      await prisma.outlet.update({
-        where: { id: data.id },
-        data: { 
-          name: data.name,
-          address: data.address,
-          phone: data.phone,
-          latitude: data.latitude ?? null,
-          longitude: data.longitude ?? null,
-          geofenceMeters: data.geofenceMeters ?? null,
-        }
-      });
-    } else {
-      await prisma.outlet.create({
-        data: { 
-          name: data.name,
-          address: data.address,
-          phone: data.phone,
-          latitude: data.latitude ?? null,
-          longitude: data.longitude ?? null,
-          geofenceMeters: data.geofenceMeters ?? null,
-          companyId: data.companyId
-        }
-      });
+    const gpsProvided =
+      data.latitude !== null && data.latitude !== undefined ||
+      data.longitude !== null && data.longitude !== undefined ||
+      data.geofenceMeters !== null && data.geofenceMeters !== undefined;
+
+    const baseData: any = {
+      name: data.name,
+      address: data.address,
+      phone: data.phone,
+    };
+
+    const withGps: any = {
+      ...baseData,
+      latitude: data.latitude ?? null,
+      longitude: data.longitude ?? null,
+      geofenceMeters: data.geofenceMeters ?? null,
+    };
+
+    try {
+      if (data.id) {
+        await prisma.outlet.update({
+          where: { id: data.id },
+          data: withGps,
+        });
+      } else {
+        await prisma.outlet.create({
+          data: {
+            ...withGps,
+            companyId: data.companyId,
+          },
+        });
+      }
+    } catch (e: any) {
+      if (gpsProvided) {
+        throw new Error("GPS columns not found in database. Run the Supabase SQL migration for Outlet latitude/longitude/geofenceMeters, then try again.");
+      }
+      if (data.id) {
+        await prisma.outlet.update({
+          where: { id: data.id },
+          data: baseData,
+        });
+      } else {
+        await prisma.outlet.create({
+          data: {
+            ...baseData,
+            companyId: data.companyId,
+          },
+        });
+      }
     }
     revalidatePath("/admin/companies");
   }
