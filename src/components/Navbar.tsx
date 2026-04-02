@@ -17,6 +17,7 @@ import {
   UserCheck,
   Clock3,
   ChevronDown,
+  HelpCircle,
 } from "lucide-react";
 import { useState } from "react";
 import { getDisplayName } from "@/lib/displayName";
@@ -25,6 +26,7 @@ export default function Navbar({ user }: { user: any }) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const avatarSrc =
     user?.avatarUrl && user?.updatedAt
       ? `${user.avatarUrl}${user.avatarUrl.includes("?") ? "&" : "?"}v=${new Date(user.updatedAt).getTime()}`
@@ -71,6 +73,11 @@ export default function Navbar({ user }: { user: any }) {
   const primaryItems = menuItems.slice(0, 3);
   const moreItems = menuItems.slice(3);
   const displayName = getDisplayName(user);
+  const userMenuItems = [
+    { name: "My Profile", href: "/staff/profile", icon: User },
+    { name: "Settings", href: "/staff/settings", icon: Settings },
+    { name: "Help", href: "/staff/help", icon: HelpCircle },
+  ];
 
   return (
     <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
@@ -114,7 +121,10 @@ export default function Navbar({ user }: { user: any }) {
                         <a
                           key={item.name}
                           href={item.href}
-                          onClick={() => setIsMoreOpen(false)}
+                          onClick={() => {
+                            setIsMoreOpen(false);
+                            setIsUserMenuOpen(false);
+                          }}
                           className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
                             isActive(item.href)
                               ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
@@ -140,27 +150,59 @@ export default function Navbar({ user }: { user: any }) {
                   {user.role} • {user.department}
                 </span>
               </div>
-              <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700">
-                {avatarSrc ? (
-                  <img
-                    src={avatarSrc}
-                    alt="Avatar"
-                    className="h-10 w-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <User className="w-5 h-5 text-slate-500" />
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsUserMenuOpen((v) => !v);
+                    setIsMoreOpen(false);
+                  }}
+                  className="flex items-center gap-2 p-1.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+                >
+                  <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    {avatarSrc ? (
+                      <img
+                        src={avatarSrc}
+                        alt="Avatar"
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-5 h-5 text-slate-500" />
+                    )}
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${isUserMenuOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 top-14 min-w-56 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-2 z-50">
+                    {userMenuItems.map((item) => (
+                      <a
+                        key={item.name}
+                        href={item.href}
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                          isActive(item.href)
+                            ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                            : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        <span className="whitespace-nowrap">{item.name}</span>
+                      </a>
+                    ))}
+                    <div className="my-2 h-px bg-slate-200 dark:bg-slate-800" />
+                    <form action="/api/logout" method="POST">
+                      <button
+                        type="submit"
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Logout</span>
+                      </button>
+                    </form>
+                  </div>
                 )}
               </div>
-              <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2" />
-              <form action="/api/logout" method="POST">
-                <button
-                  type="submit"
-                  className="flex items-center px-3 py-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all text-sm font-semibold border border-transparent hover:border-red-200 dark:hover:border-red-900/30"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </button>
-              </form>
             </div>
 
             {/* Mobile menu button */}
@@ -220,6 +262,25 @@ export default function Navbar({ user }: { user: any }) {
               <div className="text-base font-medium text-slate-800 dark:text-slate-200">{displayName}</div>
               <div className="text-sm font-medium text-slate-500">{user.role} • {user.department}</div>
             </div>
+          </div>
+          <div className="space-y-1 mb-3">
+            {userMenuItems.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className={`${
+                  isActive(item.href)
+                    ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                } block px-3 py-2 rounded-xl text-sm font-semibold transition-colors`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <div className="flex items-center">
+                  <item.icon className="w-5 h-5 mr-3" />
+                  {item.name}
+                </div>
+              </a>
+            ))}
           </div>
           <form action="/api/logout" method="POST">
             <button
