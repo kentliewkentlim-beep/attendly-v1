@@ -91,6 +91,8 @@ export default async function StaffDashboard({ searchParams }: { searchParams?: 
       select: { outletId: true },
     });
     const targetOutletId = rosterForDay?.outletId || sessionUser.outletId || null;
+    const userFlags = await (prisma as any).user.findUnique({ where: { id: sessionUser.id }, select: { requiresGeofence: true } });
+    const isRemoteCheckin = userFlags?.requiresGeofence === false;
     if (targetOutletId) {
       const outlet = await (prisma as any).outlet
         .findUnique({
@@ -108,8 +110,6 @@ export default async function StaffDashboard({ searchParams }: { searchParams?: 
         if (!isRemoteCheckin && distance > (outlet!.geofenceMeters as number)) redirect(`/staff?error=gps_outside`);
       }
     }
-    const userFlags = await (prisma as any).user.findUnique({ where: { id: sessionUser.id }, select: { requiresGeofence: true } });
-    const isRemoteCheckin = userFlags?.requiresGeofence === false;
     
     // Check if late based on roster (mock logic: 9:00 AM)
     const isLate = new Date().getHours() >= 9 && new Date().getMinutes() > 0;
