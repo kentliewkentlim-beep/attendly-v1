@@ -48,7 +48,7 @@ export default async function AddEmployeePage() {
           email: email || null,
           role,
           companyId,
-          outletId: outletId || null,
+          outletId: outletId ? BigInt(outletId as string) : null,
           department: department || null,
           task: task || null,
           password: "1234", // Default password
@@ -57,7 +57,7 @@ export default async function AddEmployeePage() {
 
       if (role === "SUPERVISOR") {
         const validOutlets = await prisma.outlet.findMany({
-          where: { companyId, id: { in: supervisorOutletIds } },
+          where: { companyId, id: { in: (supervisorOutletIds as string[]).map((x) => BigInt(x)) } },
           select: { id: true },
         });
         if (validOutlets.length > 0) {
