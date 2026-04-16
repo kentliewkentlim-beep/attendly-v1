@@ -218,7 +218,7 @@ export default async function AddEmployeePage() {
                       key={o.id.toString()}
                       className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                     >
-                      <input type="checkbox" name="supervisorOutletIds" value={o.id} className="h-4 w-4" />
+                      <input type="checkbox" name="supervisorOutletIds" value={o.id.toString()} className="h-4 w-4" />
                       <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
                         {o.name} <span className="text-slate-400">({o.companyName})</span>
                       </span>
