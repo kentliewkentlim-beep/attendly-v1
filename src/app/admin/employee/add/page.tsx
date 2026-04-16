@@ -204,7 +204,7 @@ export default async function AddEmployeePage() {
                   >
                     <option value="">Select Outlet</option>
                     {companies.flatMap(c => c.outlets).map(o => (
-                      <option key={o.id} value={o.id}>{o.name} ({companies.find(c => c.id === o.companyId)?.name})</option>
+                      <option key={o.id.toString()} value={o.id.toString()}>{o.name} ({companies.find(c => c.id === o.companyId)?.name})</option>
                     ))}
                   </select>
                 </div>
@@ -215,7 +215,7 @@ export default async function AddEmployeePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {companies.flatMap((c) => c.outlets.map((o) => ({ ...o, companyName: c.name }))).map((o) => (
                     <label
-                      key={o.id}
+                      key={o.id.toString()}
                       className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                     >
                       <input type="checkbox" name="supervisorOutletIds" value={o.id} className="h-4 w-4" />
