@@ -9,7 +9,8 @@ import {
   Building2, 
   Store, 
   Briefcase,
-  AlertCircle
+  AlertCircle,
+  Heart
 } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -34,6 +35,9 @@ export default async function AddEmployeePage() {
     const department = formData.get("department") as string;
     const task = formData.get("task") as string;
     const supervisorOutletIds = formData.getAll("supervisorOutletIds").map((v) => String(v));
+    const emergencyContactName = formData.get("emergencyContactName") as string;
+    const emergencyContactPhone = formData.get("emergencyContactPhone") as string;
+    const emergencyContactRelation = formData.get("emergencyContactRelation") as string;
 
     if (!name || !phone || !role || !companyId) {
       return;
@@ -51,6 +55,9 @@ export default async function AddEmployeePage() {
           outletId: outletId ? BigInt(outletId as string) : null,
           department: department || null,
           task: task || null,
+          emergencyContactName: emergencyContactName || null,
+          emergencyContactPhone: emergencyContactPhone || null,
+          emergencyContactRelation: emergencyContactRelation || null,
           password: "1234", // Default password
         },
       });
@@ -159,6 +166,65 @@ export default async function AddEmployeePage() {
                     placeholder="e.g. john@example.com"
                     className="block w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                   />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <hr className="border-slate-100 dark:border-slate-800" />
+
+          {/* Emergency Contact */}
+          <section>
+            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 mb-6 flex items-center">
+              <Heart size={14} className="mr-2" />
+              Emergency Contact
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Contact Name</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                    <User size={18} />
+                  </div>
+                  <input
+                    type="text"
+                    name="emergencyContactName"
+                    placeholder="e.g. Jane Doe"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Contact Number</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                    <Phone size={18} />
+                  </div>
+                  <input
+                    type="tel"
+                    name="emergencyContactPhone"
+                    placeholder="e.g. 0123456789"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Relationship</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                    <Heart size={18} />
+                  </div>
+                  <select
+                    name="emergencyContactRelation"
+                    defaultValue=""
+                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm appearance-none"
+                  >
+                    <option value="">Select relationship</option>
+                    <option value="Spouse">Spouse</option>
+                    <option value="Parents">Parents</option>
+                    <option value="Sibling">Sibling</option>
+                    <option value="Friends">Friends</option>
+                  </select>
                 </div>
               </div>
             </div>
