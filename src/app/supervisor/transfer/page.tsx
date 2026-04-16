@@ -71,13 +71,13 @@ export default async function SupervisorTransferPage() {
       where: { id: staffId }
     });
 
-    if (!staff) return;
+    if (!staff || !staff.outletId) return;
 
     await prisma.transferRequest.create({
       data: {
         staffId,
-        fromOutletId: staff.outletId || "",
-        toOutletId,
+        fromOutletId: staff.outletId,
+        toOutletId: BigInt(toOutletId),
         requestDate: new Date(date),
         requesterId: sessionUser.id,
         status: "APPROVED" // Auto-approve for demo, usually would be PENDING
@@ -90,7 +90,7 @@ export default async function SupervisorTransferPage() {
         id: `roster-${staffId}-${date}`
       },
       update: {
-        outletId: toOutletId,
+        outletId: BigInt(toOutletId),
         location: "Borrowed"
       },
       create: {
@@ -98,7 +98,7 @@ export default async function SupervisorTransferPage() {
         userId: staffId,
         date: new Date(date),
         shift: "FULL_DAY",
-        outletId: toOutletId,
+        outletId: BigInt(toOutletId),
         location: "Borrowed"
       }
     });
