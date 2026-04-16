@@ -213,6 +213,20 @@ export default async function StaffDashboard({ searchParams }: { searchParams?: 
     { label: "Attendance", icon: History, href: "/staff/attendance", color: "text-emerald-600 bg-emerald-50" },
     { label: "Leave Hub", icon: Wallet, href: "/staff/leave", color: "text-orange-600 bg-orange-50" },
   ];
+  async function handleAcknowledgeAnnouncement(formData: FormData) {
+    "use server";
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) return;
+    const announcementId = formData.get("announcementId") as string;
+    if (!announcementId) return;
+    await (prisma as any).announcementAck.upsert({
+      where: { announcementId_userId: { announcementId, userId: sessionUser.id } },
+      update: {},
+      create: { announcementId, userId: sessionUser.id }
+    });
+    revalidatePath("/staff");
+  }
+
 
   const announcements = await prisma.announcement.findMany({
     where: {
@@ -222,7 +236,11 @@ export default async function StaffDashboard({ searchParams }: { searchParams?: 
         { outletId: null }
       ]
     },
-    include: { author: true },
+    include: {
+      author: true,
+      outlet: true,
+      acks: { where: { userId: user.id } }
+    },
     orderBy: { createdAt: "desc" },
     take: 3
   });
@@ -449,6 +467,21 @@ export default async function StaffDashboard({ searchParams }: { searchParams?: 
                       <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed italic mb-4">
                         "{ann.content}"
                       </p>
+                      {ann.imageUrl && (
+                        <img src={ann.imageUrl} alt="" className="mt-3 w-full max-h-56 object-cover rounded-xl border border-slate-200 dark:border-slate-700" />
+                      )}
+                      <form action={handleAcknowledgeAnnouncement} className="mt-3">
+                        <input type="hidden" name="announcementId" value={ann.id} />
+                        {(ann.acks && ann.acks.length > 0) ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 rounded-full uppercase tracking-widest">
+                            <CheckCircle2 size={12} /> Acknowledged
+                          </span>
+                        ) : (
+                          <button type="submit" className="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-full uppercase tracking-widest transition-colors">
+                            <CheckCircle2 size={12} /> Acknowledge
+                          </button>
+                        )}
+                      </form>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[8px] font-bold">
