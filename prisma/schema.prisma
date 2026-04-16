@@ -109,6 +109,7 @@ model User {
   announcementAcks    AnnouncementAck[]
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
+  requiresGeofence  Boolean   @default(true)
 }
 
 model SupervisorOutlet {
@@ -145,6 +146,7 @@ model Attendance {
   date               String    // YYYY-MM-DD for easier querying
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
+  isRemoteCheckin  Boolean   @default(false)
 
   @@unique([userId, date])
 }
