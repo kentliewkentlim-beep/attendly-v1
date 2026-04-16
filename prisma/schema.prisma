@@ -8,17 +8,17 @@ datasource db {
 }
 
 model Announcement {
-  id        String   @id @default(cuid())
-  title     String
-  content   String
-  company   Company  @relation(fields: [companyId], references: [id])
-  companyId String
-  outlet    Outlet?  @relation(fields: [outletId], references: [id])
-  outletId  String?
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  title      String
+  content    String
+  company    Company  @relation(fields: [companyId], references: [id])
+  companyId  String
+  outlet     Outlet?  @relation(fields: [outletId], references: [id])
+  outletId   BigInt?
+  author     User     @relation(fields: [authorId], references: [id])
+  authorId   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Company {
@@ -45,59 +45,70 @@ model ShiftTemplate {
 }
 
 model Outlet {
-  id               String            @id @default(cuid())
-  name             String
-  address          String?
-  phone            String?
-  latitude         Float?
-  longitude        Float?
-  geofenceMeters   Int?
-  company          Company           @relation(fields: [companyId], references: [id])
-  companyId        String
-  users            User[]
+  id                BigInt             @id @default(autoincrement())
+  name              String
+  location          String?
+  address           String?
+  operatingHours    String?            @map("operating_hours")
+  contact           String?
+  brands            Json?              @default("[]")
+  images            Json?              @default("[]")
+  facebook          String?
+  tiktok            String?
+  status            Boolean?           @default(true)
+  shortName         String?            @map("short_name")
+  phone             String?
+  latitude          Float?
+  longitude         Float?
+  geofenceMeters    Int?
+  company           Company?           @relation(fields: [companyId], references: [id])
+  companyId         String?
+  users             User[]
   supervisorOutlets SupervisorOutlet[]
-  rosters          Roster[]
-  fromTransfers    TransferRequest[] @relation("FromOutletTransfers")
-  toTransfers      TransferRequest[] @relation("ToOutletTransfers")
-  announcements    Announcement[]
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  rosters           Roster[]
+  fromTransfers     TransferRequest[]  @relation("FromOutletTransfers")
+  toTransfers       TransferRequest[]  @relation("ToOutletTransfers")
+  announcements     Announcement[]
+  createdAt         DateTime?          @default(now()) @map("created_at")
+  updatedAt         DateTime?          @default(now()) @map("updated_at")
+
+  @@map("outlets")
 }
 
 model User {
-  id                 String            @id @default(cuid())
-  name               String
-  nickname           String?
-  email              String?           @unique
-  phone              String            @unique
-  password           String            @default("1234")
-  avatarUrl          String?
-  role               String // ADMIN, SUPERVISOR, STAFF
-  department         String? // Retail, Logistic, Rover, Admin, etc.
-  task               String? // Current task or responsibility
-  status             String            @default("ACTIVE") // ACTIVE, INACTIVE
-  leaveBalance       Int               @default(14) // Annual leave balance
-  forcePasswordChange Boolean           @default(true) // Force change on first login
-  company            Company           @relation(fields: [companyId], references: [id])
-  companyId          String
-  outlet             Outlet?           @relation(fields: [outletId], references: [id])
-  outletId           String?
-  supervisorOutlets  SupervisorOutlet[]
-  attendances        Attendance[]
-  leaves             Leave[]
-  rosters            Roster[]
-  staffTransfers     TransferRequest[] @relation("StaffTransfers")
-  requestedTransfers TransferRequest[] @relation("RequestedTransfers")
-  approvedTransfers  TransferRequest[] @relation("ApprovedTransfers")
-  announcements      Announcement[]
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
+  id                  String             @id @default(cuid())
+  name                String
+  nickname            String?
+  email               String?            @unique
+  phone               String             @unique
+  password            String             @default("1234")
+  avatarUrl           String?
+  role                String             // ADMIN, SUPERVISOR, STAFF
+  department          String?            // Retail, Logistic, Rover, Admin, etc.
+  task                String?            // Current task or responsibility
+  status              String             @default("ACTIVE") // ACTIVE, INACTIVE
+  leaveBalance        Int                @default(14) // Annual leave balance
+  forcePasswordChange Boolean            @default(true) // Force change on first login
+  company             Company            @relation(fields: [companyId], references: [id])
+  companyId           String
+  outlet              Outlet?            @relation(fields: [outletId], references: [id])
+  outletId            BigInt?
+  supervisorOutlets   SupervisorOutlet[]
+  attendances         Attendance[]
+  leaves              Leave[]
+  rosters             Roster[]
+  staffTransfers      TransferRequest[]  @relation("StaffTransfers")
+  requestedTransfers  TransferRequest[]  @relation("RequestedTransfers")
+  approvedTransfers   TransferRequest[]  @relation("ApprovedTransfers")
+  announcements       Announcement[]
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 }
 
 model SupervisorOutlet {
   supervisorId String
   supervisor   User     @relation(fields: [supervisorId], references: [id])
-  outletId     String
+  outletId     BigInt
   outlet       Outlet   @relation(fields: [outletId], references: [id])
   createdAt    DateTime @default(now())
 
@@ -105,29 +116,29 @@ model SupervisorOutlet {
 }
 
 model Attendance {
-  id         String    @id @default(cuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id])
-  checkIn    DateTime?
-  checkInLat Float?
-  checkInLng Float?
-  checkInAccuracy Float?
-  lunchStart DateTime?
-  lunchStartLat Float?
-  lunchStartLng Float?
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id])
+  checkIn            DateTime?
+  checkInLat         Float?
+  checkInLng         Float?
+  checkInAccuracy    Float?
+  lunchStart         DateTime?
+  lunchStartLat      Float?
+  lunchStartLng      Float?
   lunchStartAccuracy Float?
-  lunchEnd   DateTime?
-  lunchEndLat Float?
-  lunchEndLng Float?
-  lunchEndAccuracy Float?
-  checkOut   DateTime?
-  checkOutLat Float?
-  checkOutLng Float?
-  checkOutAccuracy Float?
-  isLate     Boolean   @default(false)
-  date       String    // YYYY-MM-DD for easier querying
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  lunchEnd           DateTime?
+  lunchEndLat        Float?
+  lunchEndLng        Float?
+  lunchEndAccuracy   Float?
+  checkOut           DateTime?
+  checkOutLat        Float?
+  checkOutLng        Float?
+  checkOutAccuracy   Float?
+  isLate             Boolean   @default(false)
+  date               String    // YYYY-MM-DD for easier querying
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   @@unique([userId, date])
 }
@@ -148,32 +159,32 @@ model Leave {
 }
 
 model Roster {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
   date      DateTime
-  shift     String   // e.g., "MORNING", "AFTERNOON", "FULL_DAY"
+  shift     String    // e.g., "MORNING", "AFTERNOON", "FULL_DAY"
   location  String?
-  outletId  String?  // The actual outlet they are working at
-  outlet    Outlet?  @relation(fields: [outletId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  outletId  BigInt?   // The actual outlet they are working at
+  outlet    Outlet?   @relation(fields: [outletId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model TransferRequest {
-  id              String   @id @default(cuid())
-  staffId         String
-  staff           User     @relation("StaffTransfers", fields: [staffId], references: [id])
-  fromOutletId    String
-  fromOutlet      Outlet   @relation("FromOutletTransfers", fields: [fromOutletId], references: [id])
-  toOutletId      String
-  toOutlet        Outlet   @relation("ToOutletTransfers", fields: [toOutletId], references: [id])
-  requestDate     DateTime
-  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED, RETURNED
-  requesterId     String
-  requester       User     @relation("RequestedTransfers", fields: [requesterId], references: [id])
-  approverId      String?
-  approver        User?    @relation("ApprovedTransfers", fields: [approverId], references: [id])
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id           String   @id @default(cuid())
+  staffId      String
+  staff        User     @relation("StaffTransfers", fields: [staffId], references: [id])
+  fromOutletId BigInt
+  fromOutlet   Outlet   @relation("FromOutletTransfers", fields: [fromOutletId], references: [id])
+  toOutletId   BigInt
+  toOutlet     Outlet   @relation("ToOutletTransfers", fields: [toOutletId], references: [id])
+  requestDate  DateTime
+  status       String   @default("PENDING") // PENDING, APPROVED, REJECTED, RETURNED
+  requesterId  String
+  requester    User     @relation("RequestedTransfers", fields: [requesterId], references: [id])
+  approverId   String?
+  approver     User?    @relation("ApprovedTransfers", fields: [approverId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
