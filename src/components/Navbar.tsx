@@ -51,7 +51,6 @@ export default function Navbar({ user }: { user: any }) {
   ];
 
   const adminMenuItems = [
-    { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { name: "Companies and Outlets", href: "/admin/companies", icon: Building2 },
     { name: "Employee", href: "/admin/employee", icon: UserCheck },
     { name: "Leave Management", href: "/admin/leave", icon: CalendarCheck },
@@ -85,7 +84,7 @@ export default function Navbar({ user }: { user: any }) {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-base font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">CDSB Group Attendance</span>
+              <a href="/admin" className="text-base font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap hover:opacity-80 cursor-pointer">CDSB Group Attendance</a>
             </div>
             <div className="hidden sm:-my-px sm:ml-4 sm:flex sm:space-x-1">
               {primaryItems.map((item) => (
