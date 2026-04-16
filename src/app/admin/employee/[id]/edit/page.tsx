@@ -54,7 +54,7 @@ export default async function EmployeeEditPage({
         task,
         status,
         companyId,
-        outletId: outletId || null,
+        outletId: outletId ? BigInt(outletId as string) : null,
       },
     });
 
@@ -62,7 +62,7 @@ export default async function EmployeeEditPage({
       const validOutlets = await prisma.outlet.findMany({
         where: {
           companyId,
-          id: { in: selectedSupervisorOutletIds },
+          id: { in: (selectedSupervisorOutletIds as string[]).map((x) => BigInt(x)) },
         },
         select: { id: true },
       });
