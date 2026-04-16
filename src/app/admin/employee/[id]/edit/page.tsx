@@ -23,7 +23,7 @@ export default async function EmployeeEditPage({
       where: { supervisorId: employee.id },
     })
     .catch(() => []);
-  const supervisorOutletIds = new Set<string>(supervisorOutletRows.map((r: any) => r.outletId));
+  const supervisorOutletIds = new Set<string>(supervisorOutletRows.map((r: any) => String(r.outletId)));
 
   async function save(formData: FormData) {
     "use server";
@@ -215,12 +215,12 @@ export default async function EmployeeEditPage({
             </label>
             <select
               name="outletId"
-              defaultValue={employee.outletId || ""}
+              defaultValue={employee.outletId?.toString() ?? ""}
               className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
             >
               <option value="">Unassigned</option>
               {outlets.map((o) => (
-                <option key={o.id} value={o.id}>
+                <option key={o.id.toString()} value={o.id.toString()}>
                   {o.name}
                 </option>
               ))}
@@ -234,14 +234,14 @@ export default async function EmployeeEditPage({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {outlets.map((o) => (
                 <label
-                  key={o.id}
+                  key={o.id.toString()}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                 >
                   <input
                     type="checkbox"
                     name="supervisorOutletIds"
-                    value={o.id}
-                    defaultChecked={supervisorOutletIds.has(o.id)}
+                    value={o.id.toString()}
+                    defaultChecked={supervisorOutletIds.has(o.id.toString())}
                     className="h-4 w-4"
                   />
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{o.name}</span>
