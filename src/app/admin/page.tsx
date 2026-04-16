@@ -225,4 +225,3 @@ function StatCard({ title, value, icon: Icon, color, trend }: any) {
     </div>
   );
 }
-
