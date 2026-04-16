@@ -57,6 +57,7 @@ export default function Navbar({ user }: { user: any }) {
     { name: "Roster Management", href: "/admin/roster", icon: CalendarDays },
     { name: "Shift Template", href: "/admin/shift-template", icon: Clock3 },
     { name: "Reports", href: "/admin/reports", icon: FileText },
+    { name: "Announcement", href: "/admin/announcement", icon: Megaphone },
   ];
 
   const menuItems =
