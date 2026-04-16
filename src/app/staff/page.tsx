@@ -105,9 +105,11 @@ export default async function StaffDashboard({ searchParams }: { searchParams?: 
           { lat: gps.lat!, lng: gps.lng! },
           { lat: outlet!.latitude!, lng: outlet!.longitude! }
         );
-        if (distance > (outlet!.geofenceMeters as number)) redirect(`/staff?error=gps_outside`);
+        if (!isRemoteCheckin && distance > (outlet!.geofenceMeters as number)) redirect(`/staff?error=gps_outside`);
       }
     }
+    const userFlags = await (prisma as any).user.findUnique({ where: { id: sessionUser.id }, select: { requiresGeofence: true } });
+    const isRemoteCheckin = userFlags?.requiresGeofence === false;
     
     // Check if late based on roster (mock logic: 9:00 AM)
     const isLate = new Date().getHours() >= 9 && new Date().getMinutes() > 0;
@@ -115,8 +117,8 @@ export default async function StaffDashboard({ searchParams }: { searchParams?: 
     try {
       await (prisma as any).attendance.upsert({
         where: { userId_date: { userId: sessionUser.id, date: localDate } },
-        update: { checkIn: new Date(), isLate, checkInLat: gps.lat, checkInLng: gps.lng, checkInAccuracy: gps.accuracy },
-        create: { userId: sessionUser.id, date: localDate, checkIn: new Date(), isLate, checkInLat: gps.lat, checkInLng: gps.lng, checkInAccuracy: gps.accuracy },
+        update: { isRemoteCheckin, checkIn: new Date(), isLate, checkInLat: gps.lat, checkInLng: gps.lng, checkInAccuracy: gps.accuracy },
+        create: { isRemoteCheckin, userId: sessionUser.id, date: localDate, checkIn: new Date(), isLate, checkInLat: gps.lat, checkInLng: gps.lng, checkInAccuracy: gps.accuracy },
       });
     } catch {
       await prisma.attendance.upsert({
