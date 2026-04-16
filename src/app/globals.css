@@ -36,7 +36,7 @@
 
 html, body {
   overscroll-behavior: none;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
