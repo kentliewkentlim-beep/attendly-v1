@@ -34,7 +34,7 @@ export default async function SupervisorAnnouncementPage() {
         title: data.title,
         content: data.content,
         companyId: sessionUser.companyId,
-        outletId: data.outletId,
+        outletId: data.outletId ? BigInt(data.outletId) : null,
         authorId: sessionUser.id
       }
     });
