@@ -91,6 +91,7 @@ export default function Navbar({ user }: { user: any }) {
                 <a
                   key={item.name}
                   href={item.href}
+                  title={item.name}
                   onClick={() => setIsMoreOpen(false)}
                   className={`${
                     isActive(item.href)
@@ -98,8 +99,7 @@ export default function Navbar({ user }: { user: any }) {
                       : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                   } inline-flex items-center px-2 py-2 text-sm font-semibold transition-colors rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 mt-2 h-12`}
                 >
-                  <item.icon className={`w-4 h-4 mr-2 ${isActive(item.href) ? "text-blue-600" : ""}`} />
-                  {item.name}
+                  <item.icon className={`w-5 h-5 ${isActive(item.href) ? "text-blue-600" : ""}`} />
                 </a>
               ))}
               {moreItems.length > 0 && (
