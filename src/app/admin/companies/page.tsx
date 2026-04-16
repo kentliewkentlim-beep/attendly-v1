@@ -89,7 +89,7 @@ export default async function CompaniesPage() {
     try {
       if (data.id) {
         await prisma.outlet.update({
-          where: { id: data.id },
+          where: { id: BigInt(data.id) },
           data: withGps,
         });
       } else {
@@ -106,7 +106,7 @@ export default async function CompaniesPage() {
       }
       if (data.id) {
         await prisma.outlet.update({
-          where: { id: data.id },
+          where: { id: BigInt(data.id) },
           data: baseData,
         });
       } else {
@@ -123,7 +123,7 @@ export default async function CompaniesPage() {
 
   async function handleDeleteOutlet(id: string) {
     "use server";
-    await prisma.outlet.delete({ where: { id } });
+    await prisma.outlet.delete({ where: { id: BigInt(id) } });
     revalidatePath("/admin/companies");
   }
 
