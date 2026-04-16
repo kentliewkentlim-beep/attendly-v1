@@ -17,7 +17,7 @@ export default async function StaffDashboard({ searchParams }: { searchParams?: 
   const params = (await searchParams) || {};
   const error = typeof params.error === "string" ? params.error : "";
   const hdrs = await headers();
-  const tz = hdrs.get("x-vercel-ip-timezone") || "UTC";
+  const tz = hdrs.get("x-vercel-ip-timezone") || "Asia/Kuala_Lumpur";
   const nowLocal = new Date(
     new Date().toLocaleString("en-US", { timeZone: tz })
   );
@@ -112,7 +112,8 @@ export default async function StaffDashboard({ searchParams }: { searchParams?: 
     }
     
     // Check if late based on roster (mock logic: 9:00 AM)
-    const isLate = new Date().getHours() >= 9 && new Date().getMinutes() > 0;
+    const nowMY = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kuala_Lumpur" }));
+  const isLate = nowMY.getHours() > 9 || (nowMY.getHours() === 9 && nowMY.getMinutes() > 0);
 
     try {
       await (prisma as any).attendance.upsert({
@@ -399,7 +400,7 @@ export default async function StaffDashboard({ searchParams }: { searchParams?: 
                         <p className="text-[10px] text-slate-400 font-bold uppercase">{item.time ? "Completed" : "Pending"}</p>
                       </div>
                       <p className={`text-sm font-black tabular-nums ${item.time ? "text-slate-700 dark:text-slate-300" : "text-slate-300"}`}>
-                        {item.time ? format(new Date(item.time), "hh:mm a") : "--:--"}
+                        {item.time ? new Date(item.time).toLocaleTimeString("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit", hour12: true }) : "--:--"}
                       </p>
                     </div>
                   </div>
