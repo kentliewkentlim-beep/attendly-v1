@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { 
   Calendar as CalendarIcon, 
   ChevronLeft, 
@@ -53,6 +54,14 @@ export default function RosterClient({
 
   const [localRosters, setLocalRosters] = useState<any[]>(normalizeRostersForCompany(selectedCompanyId));
 
+  const router = useRouter();
+
+  // Sync localRosters when rosters prop changes (after server action revalidation)
+  useEffect(() => {
+    setLocalRosters(normalizeRostersForCompany(selectedCompanyId));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rosters]);
+
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
   const weekStartStr = format(currentWeekStart, "yyyy-MM-dd");
   const weekDateSet = new Set(weekDays.map((d) => format(d, "yyyy-MM-dd")));
@@ -98,6 +107,7 @@ export default function RosterClient({
         fromStart: format(lastWeekStart, "yyyy-MM-dd"),
         toStart: weekStartStr,
       });
+      router.refresh();
     }
   };
 
