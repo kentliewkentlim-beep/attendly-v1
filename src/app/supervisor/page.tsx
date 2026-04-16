@@ -38,7 +38,7 @@ export default async function SupervisorDashboard({
     where: { companyId: user.companyId },
     orderBy: { name: "asc" },
   });
-  const allowedOutletIds = getAllowedOutletIds(user as any, companyOutlets.map((o) => o.id.toString()));
+  const allowedOutletIds = getAllowedOutletIds(user as any, companyOutlets.map((o) => o.id)).map((id) => id.toString());
   const requestedOutletId = params.outletId || "";
   const selectedOutletId = allowedOutletIds.includes(requestedOutletId)
     ? requestedOutletId
