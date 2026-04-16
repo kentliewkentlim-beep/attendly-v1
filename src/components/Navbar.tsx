@@ -70,8 +70,8 @@ export default function Navbar({ user }: { user: any }) {
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
 
-  const primaryItems = menuItems.slice(0, 3);
-  const moreItems = menuItems.slice(3);
+  const primaryItems = menuItems;
+  const moreItems = [] as typeof menuItems;
   const displayName = getDisplayName(user);
   const userMenuItems = [
     { name: "My Profile", href: "/staff/profile", icon: User },
@@ -85,11 +85,9 @@ export default function Navbar({ user }: { user: any }) {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-2">
-                <span className="text-white font-bold">✓</span>
-              </div>
+              <span className="text-base font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">CDSB Group Attendance</span>
             </div>
-            <div className="hidden sm:-my-px sm:ml-8 sm:flex sm:space-x-4">
+            <div className="hidden sm:-my-px sm:ml-4 sm:flex sm:space-x-1">
               {primaryItems.map((item) => (
                 <a
                   key={item.name}
@@ -99,7 +97,7 @@ export default function Navbar({ user }: { user: any }) {
                     isActive(item.href)
                       ? "text-blue-600 dark:text-blue-400"
                       : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                  } inline-flex items-center px-3 py-2 text-sm font-semibold transition-colors rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 mt-2 h-12`}
+                  } inline-flex items-center px-2 py-2 text-sm font-semibold transition-colors rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 mt-2 h-12`}
                 >
                   <item.icon className={`w-4 h-4 mr-2 ${isActive(item.href) ? "text-blue-600" : ""}`} />
                   {item.name}
@@ -110,7 +108,7 @@ export default function Navbar({ user }: { user: any }) {
                   <button
                     type="button"
                     onClick={() => setIsMoreOpen((v) => !v)}
-                    className="inline-flex items-center px-3 py-2 text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 mt-2 h-12"
+                    className="inline-flex items-center px-2 py-2 text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 mt-2 h-12"
                   >
                     More
                     <ChevronDown className="w-4 h-4 ml-1" />
