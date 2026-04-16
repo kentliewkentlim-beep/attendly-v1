@@ -38,7 +38,7 @@ export default async function SupervisorDashboard({
     where: { companyId: user.companyId },
     orderBy: { name: "asc" },
   });
-  const allowedOutletIds = getAllowedOutletIds(user as any, companyOutlets.map((o) => o.id));
+  const allowedOutletIds = getAllowedOutletIds(user as any, companyOutlets.map((o) => o.id.toString()));
   const requestedOutletId = params.outletId || "";
   const selectedOutletId = allowedOutletIds.includes(requestedOutletId)
     ? requestedOutletId
@@ -46,12 +46,12 @@ export default async function SupervisorDashboard({
       ? allowedOutletIds[0]
       : "";
 
-  const outlets = companyOutlets.filter((o) => allowedOutletIds.includes(o.id));
+  const outlets = companyOutlets.filter((o) => allowedOutletIds.includes(o.id.toString()));
   const outletWhere =
     selectedOutletId
-      ? { outletId: selectedOutletId }
+      ? { outletId: BigInt(selectedOutletId) }
       : allowedOutletIds.length > 0
-        ? { outletId: { in: allowedOutletIds } }
+        ? { outletId: { in: allowedOutletIds.map((id) => BigInt(id)) } }
         : {};
 
   const todayStr = format(new Date(), "yyyy-MM-dd");
@@ -183,7 +183,7 @@ export default async function SupervisorDashboard({
             <UserPlus className="text-blue-600" size={32} />
             Supervisor Dashboard
           </h1>
-          <p className="text-slate-500 mt-1 font-medium">Monitoring {outlets.find(o => o.id === selectedOutletId)?.name || "All Outlets"} at {user.company.name}</p>
+          <p className="text-slate-500 mt-1 font-medium">Monitoring {outlets.find(o => o.id.toString() === selectedOutletId)?.name || "All Outlets"} at {user.company.name}</p>
         </div>
         
         <div className="w-full md:w-64">
@@ -199,7 +199,7 @@ export default async function SupervisorDashboard({
                 >
                   <option value="">All Managed Outlets</option>
                   {outlets.map(o => (
-                    <option key={o.id} value={o.id}>{o.name}</option>
+                    <option key={o.id.toString()} value={o.id.toString()}>{o.name}</option>
                   ))}
                 </select>
               </div>
@@ -233,9 +233,9 @@ export default async function SupervisorDashboard({
           ) : (
             outlets.map((o) => (
               <span
-                key={o.id}
+                key={o.id.toString()}
                 className={`text-xs font-bold px-3 py-1.5 rounded-full border ${
-                  o.id === selectedOutletId
+                  o.id.toString() === selectedOutletId
                     ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-900/40"
                     : "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800/50 dark:text-slate-300 dark:border-slate-700"
                 }`}
