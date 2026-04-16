@@ -41,7 +41,7 @@ export default async function EmployeeEditPage({
     const selectedSupervisorOutletIds = formData
       .getAll("supervisorOutletIds")
       .map((v) => String(v));
-
+    const requiresGeofence = formData.get("requiresGeofence") !== "NO";
     await (prisma as any).user.update({
       where: { id },
       data: {
@@ -55,6 +55,7 @@ export default async function EmployeeEditPage({
         status,
         companyId,
         outletId: outletId ? BigInt(outletId as string) : null,
+        requiresGeofence,
       },
     });
 
@@ -191,6 +192,19 @@ export default async function EmployeeEditPage({
             </select>
           </div>
 
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+              Geofence Check-in
+            </label>
+            <select
+              name="requiresGeofence"
+              defaultValue={(employee as any).requiresGeofence === false ? "NO" : "YES"}
+              className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+            >
+              <option value="YES">Enforced (10m Geofence)</option>
+              <option value="NO">Disabled (Remote Staff)</option>
+            </select>
+          </div>
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
               Company
