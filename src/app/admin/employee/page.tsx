@@ -62,7 +62,7 @@ export default async function EmployeeListPage({
           ],
         },
         companyFilter ? { companyId: companyFilter } : {},
-        outletFilter ? { outletId: outletFilter } : {},
+        outletFilter ? { outletId: BigInt(outletFilter) } : {},
         roleFilter ? { role: roleFilter } : {},
         statusFilter ? { status: statusFilter } : {},
       ],
@@ -317,7 +317,7 @@ export default async function EmployeeListPage({
                 >
                   <option value="">Any Outlet</option>
                   {outlets.map(o => (
-                    <option key={o.id} value={o.id}>{o.name}</option>
+                    <option key={o.id.toString()} value={o.id.toString()}>{o.name}</option>
                   ))}
                 </select>
               </div>
