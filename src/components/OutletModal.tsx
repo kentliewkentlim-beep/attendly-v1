@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Store, Save, MapPin, Phone } from "lucide-react";
 
 export default function OutletModal({ 
@@ -24,6 +24,16 @@ export default function OutletModal({
   const [geofenceMeters, setGeofenceMeters] = useState<string>(outlet?.geofenceMeters?.toString?.() || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+    setName(outlet?.name || "");
+    setAddress(outlet?.address || "");
+    setPhone(outlet?.phone || "");
+    setLatitude(outlet?.latitude?.toString?.() || "");
+    setLongitude(outlet?.longitude?.toString?.() || "");
+    setGeofenceMeters(outlet?.geofenceMeters?.toString?.() || "");
+    setError("");
+  }, [outlet, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
