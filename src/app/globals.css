@@ -34,6 +34,11 @@
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+html, body {
+  overscroll-behavior: none;
+  overflow-x: hidden;
+}
+
 body {
   color: var(--foreground);
   background-color: var(--background);
