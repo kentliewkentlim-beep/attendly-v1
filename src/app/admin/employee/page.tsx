@@ -111,7 +111,7 @@ export default async function EmployeeListPage({
     const companyByName = new Map(companies.map((c) => [c.name.toLowerCase(), c]));
 
     const outlets = await prisma.outlet.findMany();
-    const outletById = new Map(outlets.map((o) => [o.id, o]));
+    const outletById = new Map(outlets.map((o) => [o.id.toString(), o]));
     const outletByNameCompany = new Map(outlets.map((o) => [`${o.companyId}::${o.name.toLowerCase()}`, o]));
 
     let created = 0;
