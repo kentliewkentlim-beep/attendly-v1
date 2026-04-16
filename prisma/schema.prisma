@@ -17,6 +17,8 @@ model Announcement {
   outletId   BigInt?
   author     User     @relation(fields: [authorId], references: [id])
   authorId   String
+  imageUrl   String?
+  acks       AnnouncementAck[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
@@ -104,6 +106,7 @@ model User {
   requestedTransfers  TransferRequest[]  @relation("RequestedTransfers")
   approvedTransfers   TransferRequest[]  @relation("ApprovedTransfers")
   announcements       Announcement[]
+  announcementAcks    AnnouncementAck[]
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
 }
@@ -190,4 +193,17 @@ model TransferRequest {
   approver     User?    @relation("ApprovedTransfers", fields: [approverId], references: [id])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model AnnouncementAck {
+  id             String       @id @default(cuid())
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  announcementId String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  acknowledgedAt DateTime     @default(now())
+
+  @@unique([announcementId, userId])
+  @@index([announcementId])
+  @@index([userId])
 }
