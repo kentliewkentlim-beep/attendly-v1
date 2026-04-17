@@ -75,7 +75,19 @@ export default async function StaffLayout({
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       {/* Desktop navbar (hidden on mobile) */}
       <div className="hidden sm:block">
-        <Navbar user={user} />
+        <Navbar
+          user={user}
+          announcements={announcements.map((a) => ({
+            id: a.id,
+            title: a.title,
+            content: a.content,
+            imageUrl: (a as any).imageUrl,
+            createdAt: a.createdAt,
+            author: a.author ? { name: a.author.name } : null,
+            acks: a.acks,
+          }))}
+          onAcknowledge={handleAcknowledgeAnnouncement}
+        />
       </div>
 
       {/* Mobile top bar (hidden on desktop) */}
