@@ -2,7 +2,6 @@ import { getCurrentUser, logout } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import {
-  User,
   Store,
   Building2,
   LogOut,
@@ -10,7 +9,6 @@ import {
   History,
   Wallet,
   CalendarCheck,
-  Settings,
   HelpCircle,
   Shield
 } from "lucide-react";
@@ -18,7 +16,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { getSupabaseServiceClient } from "@/lib/supabase";
-import AvatarUploader from "@/components/AvatarUploader";
+import SettingsAccordion from "@/components/SettingsAccordion";
 import { getDisplayName, getSecondaryName } from "@/lib/displayName";
 
 export default async function StaffProfilePage() {
@@ -36,7 +34,7 @@ export default async function StaffProfilePage() {
     { label: "My Attendance", icon: History, href: "/staff/attendance", color: "text-blue-600 bg-blue-50" },
     { label: "Leave Balance", icon: Wallet, href: "/staff/leave", color: "text-emerald-600 bg-emerald-50" },
     { label: "Apply Leave", icon: CalendarCheck, href: "/staff/leave", color: "text-orange-600 bg-orange-50" },
-    { label: "Settings", icon: Settings, href: "/staff/settings", color: "text-slate-600 bg-slate-100" },
+    // Settings is rendered separately as <SettingsAccordion /> below so it can expand inline
     { label: "Help & Support", icon: HelpCircle, href: "/staff/help", color: "text-purple-600 bg-purple-50" },
   ];
 
@@ -73,14 +71,18 @@ export default async function StaffProfilePage() {
   return (
     <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <div className="space-y-8">
+        {/* Top profile card â avatar display only (no upload button here) */}
         <div className="card-base p-8 text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-24 bg-blue-600" />
           <div className="relative z-10 pt-4">
-            <div className="inline-flex items-center justify-center rounded-3xl bg-white shadow-xl border-4 border-white mb-4 overflow-hidden">
-              <AvatarUploader
-                size={96}
+            <div
+              className="inline-flex items-center justify-center rounded-3xl bg-white shadow-xl border-4 border-white mb-4 overflow-hidden"
+              style={{ width: 96, height: 96 }}
+            >
+              <img
                 src={avatarSrc}
-                onUpload={handleUpload}
+                alt={displayName}
+                className="w-full h-full object-cover"
               />
             </div>
             <h1 className="text-2xl font-black text-slate-900 dark:text-white">{displayName}</h1>
@@ -88,7 +90,7 @@ export default async function StaffProfilePage() {
               <p className="text-xs font-bold text-slate-500 mt-1">{secondaryName}</p>
             )}
             <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mt-1">{user.role}</p>
-            
+
             <div className="mt-6 flex flex-wrap justify-center gap-4">
               <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-800">
                 <Store size={14} className="text-slate-400" />
@@ -102,6 +104,7 @@ export default async function StaffProfilePage() {
           </div>
         </div>
 
+        {/* Security Status card */}
         <div className="card-base p-6 flex items-center justify-between bg-blue-50/30 border-blue-100">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
@@ -118,41 +121,68 @@ export default async function StaffProfilePage() {
           </div>
         </div>
 
-        <div className="card-base p-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Profile Photo</p>
-              <p className="text-xs font-bold text-slate-600">Tap photo to change</p>
-            </div>
-          </div>
-          <AvatarUploader
-            src={avatarSrc}
-            onUpload={handleUpload}
-          />
-        </div>
-
+        {/* Menu list â Settings is inline-expandable accordion with "Change Photo" sub-item */}
         <div className="card-base overflow-hidden">
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {menuItems.map((item) => (
-              <Link 
-                key={item.label} 
-                href={item.href}
-                className="flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group"
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`p-2.5 rounded-xl transition-transform group-hover:scale-110 ${item.color}`}>
-                    <item.icon size={20} />
-                  </div>
-                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{item.label}</span>
+            <Link
+              href={menuItems[0].href}
+              className="flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`p-2.5 rounded-xl transition-transform group-hover:scale-110 ${menuItems[0].color}`}>
+                  <History size={20} />
                 </div>
-                <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
-              </Link>
-            ))}
+                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{menuItems[0].label}</span>
+              </div>
+              <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
+            </Link>
+
+            <Link
+              href={menuItems[1].href}
+              className="flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`p-2.5 rounded-xl transition-transform group-hover:scale-110 ${menuItems[1].color}`}>
+                  <Wallet size={20} />
+                </div>
+                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{menuItems[1].label}</span>
+              </div>
+              <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
+            </Link>
+
+            <Link
+              href={menuItems[2].href}
+              className="flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`p-2.5 rounded-xl transition-transform group-hover:scale-110 ${menuItems[2].color}`}>
+                  <CalendarCheck size={20} />
+                </div>
+                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{menuItems[2].label}</span>
+              </div>
+              <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
+            </Link>
+
+            {/* Settings â expandable, contains Change Photo sub-item */}
+            <SettingsAccordion onUpload={handleUpload} />
+
+            <Link
+              href={menuItems[3].href}
+              className="flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`p-2.5 rounded-xl transition-transform group-hover:scale-110 ${menuItems[3].color}`}>
+                  <HelpCircle size={20} />
+                </div>
+                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{menuItems[3].label}</span>
+              </div>
+              <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
+            </Link>
           </div>
         </div>
 
         <form action={handleLogout}>
-          <button 
+          <button
             type="submit"
             className="w-full flex items-center justify-center gap-3 p-5 rounded-3xl bg-red-50 hover:bg-red-100 text-red-600 font-black uppercase tracking-[0.2em] text-xs transition-all active:scale-[0.98] border border-red-100"
           >
