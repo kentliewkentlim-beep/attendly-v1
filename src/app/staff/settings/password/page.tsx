@@ -167,7 +167,7 @@ export default async function ChangePasswordPage({
         </div>
 
         {/* Action buttons — sticky on mobile above BottomNav, inline on desktop */}
-        <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+92px)] z-20 -mx-6 sm:mx-0 px-6 sm:px-0 py-3 sm:py-0 bg-slate-50/90 sm:bg-transparent backdrop-blur-md sm:backdrop-blur-none border-t border-slate-200 sm:border-0 sm:pt-2">
+        <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+92px)] sm:static sm:bottom-auto z-20 -mx-6 sm:mx-0 px-6 sm:px-0 py-3 sm:py-0 bg-slate-50/90 sm:bg-transparent backdrop-blur-md sm:backdrop-blur-none border-t border-slate-200 sm:border-0 sm:pt-2">
           <div className="flex items-center gap-3">
             <Link
               href="/staff/profile"
