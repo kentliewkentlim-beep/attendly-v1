@@ -19,6 +19,8 @@ import {
 import { format, differenceInDays, isValid } from "date-fns";
 import { AutoSubmit } from "@/components/AutoSubmit";
 import LeaveActionModal from "@/components/LeaveActionModal";
+import ExportButton from "@/components/ExportButton";
+import { FileDown } from "lucide-react";
 import { revalidatePath } from "next/cache";
 
 export default async function AdminLeavePage({
@@ -51,6 +53,41 @@ export default async function AdminLeavePage({
       }
     },
     orderBy: { createdAt: "desc" },
+  });
+
+  // HR export payload — one row per leave request with all relevant fields
+  const exportData = leaveRequests.map((l) => {
+    const days =
+      differenceInDays(new Date(l.endDate), new Date(l.startDate)) + 1;
+    return {
+      "Employee Name": l.user?.name || "",
+      "Nickname": l.user?.nickname || "",
+      "Phone": l.user?.phone || "",
+      "Email": l.user?.email || "",
+      "Role": l.user?.role || "",
+      "Department": l.user?.department || "",
+      "Task": l.user?.task || "",
+      "Company": l.user?.company?.name || "",
+      "Outlet": l.user?.outlet?.name || "",
+      "Leave Type": l.type || "",
+      "Start Date":
+        l.startDate && isValid(new Date(l.startDate))
+          ? format(new Date(l.startDate), "yyyy-MM-dd")
+          : "",
+      "End Date":
+        l.endDate && isValid(new Date(l.endDate))
+          ? format(new Date(l.endDate), "yyyy-MM-dd")
+          : "",
+      "Days": days,
+      "Reason": l.reason || "",
+      "Status": l.status || "",
+      "Supervisor Note": l.supervisorNote || "",
+      "Applied Date":
+        l.createdAt && isValid(new Date(l.createdAt))
+          ? format(new Date(l.createdAt), "yyyy-MM-dd HH:mm")
+          : "",
+      "Remaining Balance (days)": l.user?.leaveBalance ?? 0,
+    };
   });
 
   async function handleLeaveAction(id: string, status: string, note: string) {
@@ -109,6 +146,12 @@ export default async function AdminLeavePage({
             Leave Management
           </h1>
           <p className="text-slate-500 mt-1 font-medium">Review and manage employee leave requests and balances</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <ExportButton
+            data={exportData}
+            filename={`leave_report_${format(new Date(), "yyyyMMdd")}`}
+          />
         </div>
       </div>
 
