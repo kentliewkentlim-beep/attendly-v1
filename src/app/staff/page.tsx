@@ -30,6 +30,7 @@ import {
   handleCheckOut,
   handleAcknowledgeAnnouncement,
 } from "./actions";
+import SupervisorToolsCard from "@/components/SupervisorToolsCard";
 
 /**
  * Staff dashboard (Home tab).
@@ -237,6 +238,13 @@ export default async function StaffDashboard({
           <LiveClock />
         </div>
       </header>
+
+      {/* Supervisor-only management shortcuts */}
+      {(user.role === "SUPERVISOR" || user.role === "ADMIN") && (
+        <div className="mb-6">
+          <SupervisorToolsCard />
+        </div>
+      )}
 
       {/* Latest announcement banner (mobile-first, also shown on desktop) */}
       {latestUnread && (
