@@ -11,7 +11,6 @@ import {
   Smartphone,
   LucideIcon
 } from "lucide-react";
-import BackButton from "@/components/BackButton";
 import Link from "next/link";
 
 interface SettingItem {
@@ -59,7 +58,6 @@ export default async function StaffSettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <BackButton />
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
