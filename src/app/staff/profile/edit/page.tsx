@@ -280,23 +280,21 @@ export default async function StaffProfileEditPage({
           </div>
         </div>
 
-        {/* Action buttons — sticky on mobile above BottomNav, inline on desktop */}
-        <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+92px)] sm:static sm:bottom-auto z-20 -mx-4 sm:mx-0 px-4 sm:px-0 py-3 sm:py-0 bg-slate-50/90 sm:bg-transparent backdrop-blur-md sm:backdrop-blur-none border-t border-slate-200 sm:border-0">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/staff/profile"
-              className="flex-1 flex items-center justify-center gap-2 p-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition-all"
-            >
-              Cancel
-            </Link>
-            <button
-              type="submit"
-              className="flex-1 flex items-center justify-center gap-2 p-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-xs transition-all active:scale-[0.98]"
-            >
-              <Save size={16} />
-              Save Changes
-            </button>
-          </div>
+        {/* Action buttons */}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/staff/profile"
+            className="flex-1 flex items-center justify-center gap-2 p-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition-all"
+          >
+            Cancel
+          </Link>
+          <button
+            type="submit"
+            className="flex-1 flex items-center justify-center gap-2 p-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-xs transition-all active:scale-[0.98]"
+          >
+            <Save size={16} />
+            Save Changes
+          </button>
         </div>
       </form>
     </div>
