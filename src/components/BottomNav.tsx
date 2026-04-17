@@ -51,14 +51,6 @@ export default function BottomNav({
   handleCheckOut: (formData: FormData) => void | Promise<void>;
 }) {
   const pathname = usePathname() || "";
-
-  // Hide BottomNav entirely on focus-mode routes (edit forms / change password)
-  // so action buttons sit naturally at the bottom of the form without overlap.
-  const HIDE_ON = ["/staff/profile/edit", "/staff/settings/password"];
-  if (HIDE_ON.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
-    return null;
-  }
-
   const isActive = (href: string) =>
     href === "/staff"
       ? pathname === "/staff"
