@@ -104,6 +104,41 @@ export default function AnnouncementSheet({
               </div>
             </div>
 
+            {/* Latest unread banner (amber, matches Home page) */}
+            {(() => {
+              const latest = announcements.find(
+                (a) => !a.acks || a.acks.length === 0
+              );
+              if (!latest) return null;
+              return (
+                <div className="px-5 pt-4">
+                  <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 p-4 relative overflow-hidden">
+                    <div className="flex items-start gap-3">
+                      <div className="h-8 w-8 rounded-xl bg-amber-500 flex items-center justify-center flex-shrink-0">
+                        <Megaphone className="w-4 h-4 text-white" strokeWidth={2.5} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-amber-700 bg-amber-200 px-2 py-0.5 rounded-full">
+                            Latest
+                          </span>
+                          <span className="text-[10px] font-bold text-amber-700 uppercase">
+                            {format(new Date(latest.createdAt), "MMM d")}
+                          </span>
+                        </div>
+                        <p className="font-black text-slate-900 text-sm leading-tight">
+                          {latest.title}
+                        </p>
+                        <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                          {latest.content}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* List */}
             <div className="overflow-y-auto flex-1 p-5 space-y-4">
               {announcements.length === 0 ? (
