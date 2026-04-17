@@ -52,10 +52,10 @@ export default function AnnouncementSheet({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="relative h-9 w-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition-colors"
+        className="relative h-9 w-9 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 border border-blue-200 flex items-center justify-center hover:brightness-105 transition-all"
         aria-label="Announcements"
       >
-        <Bell className="w-[18px] h-[18px] text-slate-700" />
+        <Bell className="w-[18px] h-[18px] text-blue-700" strokeWidth={2.5} />
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center ring-2 ring-white">
             {unreadCount > 9 ? "9+" : unreadCount}
