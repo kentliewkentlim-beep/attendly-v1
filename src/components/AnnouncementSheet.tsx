@@ -35,20 +35,25 @@ export default function AnnouncementSheet({
     return () => window.removeEventListener("keydown", handler);
   }, [open]);
 
-  // Lock body scroll while open
+  // Lock body scroll while open.
+  // IMPORTANT: use `overflow-y: clip` instead of `overflow: hidden`.
+  // `overflow: hidden` creates a scroll container on <body>, which permanently
+  // breaks any `position: sticky` descendants (StaffTopBar, desktop Navbar) on
+  // iOS Safari â even after the style is removed, sticky doesn't recover without
+  // a full reflow, so the top bar visually disappears on subsequent pages.
+  // `clip` prevents UI scroll WITHOUT establishing a scroll container, so
+  // sticky keeps working.
   useEffect(() => {
-    if (open) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = prev;
-      };
-    }
+    if (!open) return;
+    document.body.style.overflowY = "clip";
+    return () => {
+      document.body.style.overflowY = "";
+    };
   }, [open]);
 
   return (
     <>
-      {/* Bell button — trigger */}
+      {/* Bell button â trigger */}
       <button
         type="button"
         onClick={() => setOpen(true)}
