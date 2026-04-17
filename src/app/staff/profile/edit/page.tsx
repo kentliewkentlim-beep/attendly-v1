@@ -281,7 +281,7 @@ export default async function StaffProfileEditPage({
         </div>
 
         {/* Action buttons — sticky on mobile above BottomNav, inline on desktop */}
-        <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+92px)] z-20 -mx-4 sm:mx-0 px-4 sm:px-0 py-3 sm:py-0 bg-slate-50/90 sm:bg-transparent backdrop-blur-md sm:backdrop-blur-none border-t border-slate-200 sm:border-0">
+        <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+92px)] sm:static sm:bottom-auto z-20 -mx-4 sm:mx-0 px-4 sm:px-0 py-3 sm:py-0 bg-slate-50/90 sm:bg-transparent backdrop-blur-md sm:backdrop-blur-none border-t border-slate-200 sm:border-0">
           <div className="flex items-center gap-3">
             <Link
               href="/staff/profile"
