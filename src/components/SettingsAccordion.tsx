@@ -18,12 +18,9 @@ import type { LucideIcon } from "lucide-react";
 /**
  * Collapsible Settings row for the staff Profile page.
  *
- * Expands inline to reveal all sub-items that previously lived on
- * /staff/settings, PLUS the new "Change Photo" action.
- *
  * Sub-items with an `href` navigate to an existing settings sub-route.
- * The "Change Photo" sub-item triggers a hidden file input and submits
- * to the server action passed in via props.
+ * "Change Photo" triggers a hidden file input.
+ * Items with a `badge` are shown but disabled (Coming Soon / Beta).
  */
 export default function SettingsAccordion({
   onUpload,
@@ -38,11 +35,11 @@ export default function SettingsAccordion({
     key: string;
     label: string;
     icon: LucideIcon;
-    color: string; // tailwind classes
+    color: string;
     href?: string;
     onClick?: () => void;
     badge?: string; // "Coming Soon" / "Beta"
-    value?: string; // e.g. "English", "System"
+    value?: string;
   };
 
   const subItems: SubItem[] = [
@@ -72,14 +69,14 @@ export default function SettingsAccordion({
       label: "Notifications",
       icon: Bell,
       color: "text-orange-600 bg-orange-50",
-      href: "/staff/settings/notifications",
+      badge: "Coming Soon",
     },
     {
       key: "language",
       label: "Language",
       icon: Languages,
       color: "text-purple-600 bg-purple-50",
-      href: "/staff/settings/language",
+      badge: "Coming Soon",
       value: "English",
     },
     {
@@ -95,7 +92,7 @@ export default function SettingsAccordion({
       label: "Biometric Login",
       icon: Smartphone,
       color: "text-pink-600 bg-pink-50",
-      badge: "Beta",
+      badge: "Coming Soon",
     },
   ];
 
@@ -175,7 +172,7 @@ export default function SettingsAccordion({
         />
       </button>
 
-      {/* Sub-items panel (inline expanded) */}
+      {/* Sub-items panel */}
       {open && (
         <div className="bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
           {subItems.map(renderSubItem)}
