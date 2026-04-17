@@ -35,8 +35,8 @@ import {
  * Staff dashboard (Home tab).
  *
  * Changes vs. previous version (Apr 17, 2026 mobile redesign):
- *   - Navbar is rendered by src/app/staff/layout.tsx â removed from this page.
- *   - Server actions moved to src/app/staff/actions.ts â imported here.
+ *   - Navbar is rendered by src/app/staff/layout.tsx — removed from this page.
+ *   - Server actions moved to src/app/staff/actions.ts — imported here.
  *   - Big center clock-in/out circle button is MOBILE-HIDDEN
  *     (still shown on desktop since desktop has no BottomNav).
  *     Mobile users use the floating center button in <BottomNav /> instead.
@@ -197,7 +197,7 @@ export default async function StaffDashboard({
     take: 3,
   });
 
-  // Latest unread announcement â for the top banner
+  // Latest unread announcement — for the top banner
   const unread = announcements.filter(
     (a) => !a.acks || a.acks.length === 0
   );
@@ -218,7 +218,7 @@ export default async function StaffDashboard({
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-6 sm:mb-12">
         <div>
           <h1 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-            {getGreeting()}, {getShortName(user)}! ð
+            {getGreeting()}, {getShortName(user)}! 👋
           </h1>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <span
@@ -277,7 +277,7 @@ export default async function StaffDashboard({
                 </button>
                 <span className="text-[10px] font-black uppercase tracking-widest text-amber-700">
                   {totalUnreadCount > 1
-                    ? `+${totalUnreadCount - 1} more â tap ð`
+                    ? `+${totalUnreadCount - 1} more — tap 🔔`
                     : ""}
                 </span>
               </form>
@@ -286,7 +286,7 @@ export default async function StaffDashboard({
         </div>
       )}
 
-      {/* Quick Actions Grid â desktop only (mobile uses bottom nav) */}
+      {/* Quick Actions Grid — desktop only (mobile uses bottom nav) */}
       <div className="hidden sm:grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
         {quickActions.map((action) => (
           <Link
@@ -307,7 +307,7 @@ export default async function StaffDashboard({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 mb-12">
-        {/* Action Center â big button hidden on mobile (replaced by BottomNav) */}
+        {/* Action Center — big button hidden on mobile (replaced by BottomNav) */}
         <div className="lg:col-span-7 space-y-6 sm:space-y-8">
           {/* Today's shift card (always visible) */}
           <div className="card-base p-6 sm:p-10 relative overflow-hidden">
@@ -323,7 +323,7 @@ export default async function StaffDashboard({
                 {roster ? "09:00 AM - 06:00 PM" : "Check with supervisor"}
               </p>
 
-              {/* Big circular clock-in/out button â DESKTOP ONLY */}
+              {/* Big circular clock-in/out button — DESKTOP ONLY */}
               <div className="hidden sm:flex justify-center py-8">
                 {!attendance?.checkIn ? (
                   <GpsAwareForm
@@ -400,7 +400,7 @@ export default async function StaffDashboard({
               {/* Mobile hint: point to bottom nav */}
               <div className="sm:hidden mt-4 p-3 rounded-xl bg-blue-50 border border-blue-100">
                 <p className="text-xs text-blue-800 font-bold text-center">
-                  ð Tap the big blue button at the bottom to{" "}
+                  👇 Tap the big blue button at the bottom to{" "}
                   {!attendance?.checkIn
                     ? "Clock In"
                     : !attendance.lunchStart
@@ -549,7 +549,7 @@ export default async function StaffDashboard({
             </div>
           </div>
 
-          {/* Announcements (full list â already acknowledged + remaining) */}
+          {/* Announcements (full list — already acknowledged + remaining) */}
           {announcements.length > 0 && (
             <div className="card-base overflow-hidden">
               <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
