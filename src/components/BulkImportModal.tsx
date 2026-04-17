@@ -70,8 +70,8 @@ export default function BulkImportModal({ onImport }: { onImport: (data: any[]) 
 
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
+            <div className="flex-shrink-0 p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center">
                 <FileUp className="mr-2 text-blue-600" size={24} />
                 Bulk Employee Import
@@ -81,7 +81,7 @@ export default function BulkImportModal({ onImport }: { onImport: (data: any[]) 
               </button>
             </div>
 
-            <div className="p-8 space-y-6">
+            <div className="flex-1 overflow-y-auto p-8 space-y-6">
               <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-10 text-center hover:border-blue-400 dark:hover:border-blue-500 transition-colors group relative">
                 <input 
                   type="file" 
@@ -189,7 +189,7 @@ export default function BulkImportModal({ onImport }: { onImport: (data: any[]) 
               </div>
             </div>
 
-            <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+            <div className="flex-shrink-0 p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
               <button 
                 onClick={() => setIsOpen(false)}
                 className="btn-secondary px-6 h-11"
