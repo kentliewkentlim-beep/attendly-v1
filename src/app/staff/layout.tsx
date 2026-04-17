@@ -98,7 +98,7 @@ export default async function StaffLayout({
         onAcknowledge={handleAcknowledgeAnnouncement}
       />
 
-      {/* Page content â extra bottom padding on mobile to clear BottomNav */}
+      {/* Page content — extra bottom padding on mobile to clear BottomNav */}
       <div className="pb-24 sm:pb-0">{children}</div>
 
       {/* Mobile bottom nav (hidden on desktop) */}
