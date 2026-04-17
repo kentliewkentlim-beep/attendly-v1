@@ -35,7 +35,6 @@ export default function AvatarUploader({
           type="file"
           name="avatar"
           accept="image/*"
-          capture="user"
           className="hidden"
           onChange={() => formRef.current?.requestSubmit()}
         />
