@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { User } from "lucide-react";
+import { User, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import AnnouncementSheet from "./AnnouncementSheet";
 
 type Announcement = {
@@ -46,6 +48,15 @@ export default function StaffTopBar({
         ).getTime()}`
       : user.avatarUrl || null;
 
+  const router = useRouter();
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = () => {
+    setRefreshing(true);
+    router.refresh();
+    // Fallback full reload after brief delay to ensure fresh data
+    setTimeout(() => window.location.reload(), 400);
+  };
+
   return (
     <nav
       className="sm:hidden sticky top-0 z-40 border-b border-slate-100"
@@ -64,6 +75,19 @@ export default function StaffTopBar({
         </Link>
 
         <div className="flex items-center gap-2">
+          {/* Refresh button */}
+          <button
+            type="button"
+            onClick={handleRefresh}
+            className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 border border-blue-200 flex items-center justify-center hover:brightness-105 transition-all"
+            aria-label="Refresh"
+          >
+            <RefreshCw
+              className={`w-[18px] h-[18px] text-blue-700 ${refreshing ? "animate-spin" : ""}`}
+              strokeWidth={2.5}
+            />
+          </button>
+
           {/* Bell — opens announcement sheet */}
           <AnnouncementSheet
             announcements={announcements}
