@@ -15,10 +15,10 @@ type Announcement = {
 };
 
 /**
- * Mobile simplified top bar â only visible on mobile (sm:hidden).
+ * Mobile simplified top bar — only visible on mobile (sm:hidden).
  * Desktop uses the full <Navbar /> (rendered separately in layout).
  *
- * Contains: App logo/name, bell (with unread count â opens AnnouncementSheet),
+ * Contains: App logo/name, bell (with unread count → opens AnnouncementSheet),
  * and avatar (links to /staff/profile).
  */
 export default function StaffTopBar({
@@ -64,14 +64,14 @@ export default function StaffTopBar({
         </Link>
 
         <div className="flex items-center gap-2">
-          {/* Bell â opens announcement sheet */}
+          {/* Bell — opens announcement sheet */}
           <AnnouncementSheet
             announcements={announcements}
             unreadCount={unreadCount}
             onAcknowledge={onAcknowledge}
           />
 
-          {/* Avatar â profile */}
+          {/* Avatar → profile */}
           <Link
             href="/staff/profile"
             className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 border border-blue-200 flex items-center justify-center overflow-hidden"
