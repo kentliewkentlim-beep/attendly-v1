@@ -28,13 +28,13 @@ type Attendance = {
  * Fixed bottom navigation visible ONLY on mobile (sm:hidden).
  *
  * Center button dynamically changes based on today's attendance state:
- *   1. !checkIn      â "Clock In"    (blue)     â handleCheckIn
- *   2. !lunchStart   â "Lunch Out"   (orange)   â handleLunchStart
- *   3. !lunchEnd     â "Lunch Back"  (emerald)  â handleLunchEnd
- *   4. !checkOut     â "Clock Out"   (slate)    â handleCheckOut
- *   5. all done      â "Done"        (disabled)
+ *   1. !checkIn      → "Clock In"    (blue)     → handleCheckIn
+ *   2. !lunchStart   → "Lunch Out"   (orange)   → handleLunchStart
+ *   3. !lunchEnd     → "Lunch Back"  (emerald)  → handleLunchEnd
+ *   4. !checkOut     → "Clock Out"   (slate)    → handleCheckOut
+ *   5. all done      → "Done"        (disabled)
  *
- * Layout follows mobile-nav-mockup.html: 68Ã68 px floating center button
+ * Layout follows mobile-nav-mockup.html: 68×68 px floating center button
  * that sits 28px above the bar, with a white 6px ring.
  */
 export default function BottomNav({
