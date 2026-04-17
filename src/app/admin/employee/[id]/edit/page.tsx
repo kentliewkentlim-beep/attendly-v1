@@ -17,7 +17,10 @@ export default async function EmployeeEditPage({
   if (!employee) notFound();
 
   const companies = await prisma.company.findMany({ orderBy: { name: "asc" } });
-  const outlets = await prisma.outlet.findMany({ where: { companyId: employee.companyId }, orderBy: { name: "asc" } });
+  // Load ALL outlets (grouped by company in the dropdown below) so Admin
+  // can freely transfer employees between companies without the outlet list
+  // getting stuck on the previous company.
+  const outlets = await prisma.outlet.findMany({ orderBy: { name: "asc" } });
   const supervisorOutletRows = await (prisma as any).supervisorOutlet
     .findMany({
       where: { supervisorId: employee.id },
@@ -234,11 +237,19 @@ export default async function EmployeeEditPage({
               className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
             >
               <option value="">Unassigned</option>
-              {outlets.map((o) => (
-                <option key={o.id.toString()} value={o.id.toString()}>
-                  {o.name}
-                </option>
-              ))}
+              {companies.map((c) => {
+                const companyOutlets = outlets.filter((o) => o.companyId === c.id);
+                if (companyOutlets.length === 0) return null;
+                return (
+                  <optgroup key={c.id} label={c.name}>
+                    {companyOutlets.map((o) => (
+                      <option key={o.id.toString()} value={o.id.toString()}>
+                        {o.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                );
+              })}
             </select>
           </div>
 
