@@ -61,7 +61,6 @@ export default async function StaffProfilePage() {
     const { data } = supabase.storage.from("avatars").getPublicUrl(path);
     await (prisma as any).user.update({ where: { id: me.id }, data: { avatarUrl: data.publicUrl } });
     revalidatePath("/staff/profile");
-    redirect("/staff/profile");
   }
 
   const avatar = (user as any).avatarUrl as string | undefined;
