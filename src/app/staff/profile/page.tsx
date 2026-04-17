@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
-import BackButton from "@/components/BackButton";
 import { revalidatePath } from "next/cache";
 import { getSupabaseServiceClient } from "@/lib/supabase";
 import AvatarUploader from "@/components/AvatarUploader";
@@ -73,7 +72,6 @@ export default async function StaffProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <BackButton />
       <div className="space-y-8">
         <div className="card-base p-8 text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-24 bg-blue-600" />
