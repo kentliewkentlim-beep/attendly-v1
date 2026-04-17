@@ -9,7 +9,6 @@ import {
   History,
   Wallet,
   CalendarCheck,
-  HelpCircle,
   Shield,
   Phone,
   Mail,
@@ -40,7 +39,6 @@ export default async function StaffProfilePage() {
     { label: "Leave Balance", icon: Wallet, href: "/staff/leave", color: "text-emerald-600 bg-emerald-50" },
     { label: "Apply Leave", icon: CalendarCheck, href: "/staff/leave", color: "text-orange-600 bg-orange-50" },
     // Settings is rendered separately as <SettingsAccordion /> below so it can expand inline
-    { label: "Help & Support", icon: HelpCircle, href: "/staff/help", color: "text-purple-600 bg-purple-50" },
   ];
 
   async function handleLogout() {
@@ -256,18 +254,6 @@ export default async function StaffProfilePage() {
             {/* Settings â expandable, contains Change Photo sub-item + all old settings items */}
             <SettingsAccordion onUpload={handleUpload} />
 
-            <Link
-              href={menuItems[3].href}
-              className="flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group"
-            >
-              <div className="flex items-center gap-4">
-                <div className={`p-2.5 rounded-xl transition-transform group-hover:scale-110 ${menuItems[3].color}`}>
-                  <HelpCircle size={20} />
-                </div>
-                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{menuItems[3].label}</span>
-              </div>
-              <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
-            </Link>
           </div>
         </div>
 
