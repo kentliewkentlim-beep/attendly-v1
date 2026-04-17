@@ -269,9 +269,18 @@ export default async function AddEmployeePage() {
                     className="block w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none appearance-none cursor-pointer"
                   >
                     <option value="">Select Outlet</option>
-                    {companies.flatMap(c => c.outlets).map(o => (
-                      <option key={o.id.toString()} value={o.id.toString()}>{o.name} ({companies.find(c => c.id === o.companyId)?.name})</option>
-                    ))}
+                    {companies.map((c) => {
+                      if (c.outlets.length === 0) return null;
+                      return (
+                        <optgroup key={c.id} label={c.name}>
+                          {c.outlets.map((o) => (
+                            <option key={o.id.toString()} value={o.id.toString()}>
+                              {o.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      );
+                    })}
                   </select>
                 </div>
               </div>
