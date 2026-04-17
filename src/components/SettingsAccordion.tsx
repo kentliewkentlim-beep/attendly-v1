@@ -9,7 +9,6 @@ import {
   Lock,
   ShieldCheck,
   Bell,
-  Languages,
   Moon,
   Smartphone,
 } from "lucide-react";
@@ -70,14 +69,6 @@ export default function SettingsAccordion({
       icon: Bell,
       color: "text-orange-600 bg-orange-50",
       badge: "Coming Soon",
-    },
-    {
-      key: "language",
-      label: "Language",
-      icon: Languages,
-      color: "text-purple-600 bg-purple-50",
-      badge: "Coming Soon",
-      value: "English",
     },
     {
       key: "appearance",
