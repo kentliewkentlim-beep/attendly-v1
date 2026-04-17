@@ -18,7 +18,8 @@ export default async function AdminDashboard() {
   const today = format(nowLocal, "yyyy-MM-dd");
 
   // Stats
-  const totalEmployees = await prisma.user.count({ where: { role: "STAFF" } });
+  // Total employees across ALL roles (Admin + Supervisor + Staff), excluding inactive accounts
+  const totalEmployees = await prisma.user.count({ where: { status: "ACTIVE" } });
   const attendancesToday = await prisma.attendance.findMany({
     where: { date: today },
     include: { user: true }
