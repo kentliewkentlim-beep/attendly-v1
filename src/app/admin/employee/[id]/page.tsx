@@ -15,8 +15,10 @@ import {
   MoreVertical,
   Edit,
   History,
-  AlertCircle
+  AlertCircle,
+  KeyRound
 } from "lucide-react";
+import { getCurrentUser } from "@/lib/auth";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { format, isValid } from "date-fns";
@@ -24,10 +26,14 @@ import { revalidatePath } from "next/cache";
 
 export default async function EmployeeProfilePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
+  const spParams = (await searchParams) || {};
+  const resetDone = typeof spParams.reset === "string" && spParams.reset === "1";
   
   const employee = await prisma.user.findUnique({
     where: { id },
@@ -69,8 +75,28 @@ export default async function EmployeeProfilePage({
     revalidatePath("/admin/employee");
   }
 
+  async function resetPassword() {
+    "use server";
+    // Only ADMIN (or SUPERVISOR) can reset a staff password.
+    const me = await getCurrentUser();
+    if (!me || (me.role !== "ADMIN" && me.role !== "SUPERVISOR")) {
+      redirect("/");
+    }
+    await prisma.user.update({
+      where: { id },
+      data: { password: "1234", forcePasswordChange: true },
+    });
+    revalidatePath(`/admin/employee/${id}`);
+    redirect(`/admin/employee/${id}?reset=1`);
+  }
+
   return (
     <div className="space-y-8">
+      {resetDone && (
+        <div className="card-base p-4 border-emerald-200 bg-emerald-50 text-emerald-700 font-bold text-sm">
+          ✓ Password reset. Tell {employee.name} to log in with <code className="px-1.5 py-0.5 rounded bg-emerald-100 font-mono text-xs">1234</code> — they will be asked to set a new password.
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
@@ -97,7 +123,16 @@ export default async function EmployeeProfilePage({
             </div>
           </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
+          <form action={resetPassword}>
+            <button
+              type="submit"
+              className="btn-secondary h-11 px-4 text-sm font-bold hover:text-orange-600 hover:bg-orange-50"
+              title="Reset to default password 1234 and force a password change on next login"
+            >
+              <KeyRound size={18} className="mr-2" /> Reset Password
+            </button>
+          </form>
           <form action={toggleStatus}>
             <button 
               type="submit"
