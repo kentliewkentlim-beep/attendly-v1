@@ -173,6 +173,7 @@ export default async function EmployeeEditPage({
               className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
             >
               <option value="STAFF">Staff</option>
+              <option value="PROMOTER">Promoter</option>
               <option value="SUPERVISOR">Supervisor</option>
               <option value="ADMIN">Admin</option>
             </select>
