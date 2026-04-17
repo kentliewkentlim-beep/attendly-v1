@@ -3,6 +3,8 @@ import { usePathname } from "next/navigation";
 import {
   LogOut,
   LayoutDashboard,
+  RefreshCw,
+  Bell,
   Calendar,
   Settings,
   User,
@@ -20,10 +22,40 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { getDisplayName } from "@/lib/displayName";
+import AnnouncementSheet from "./AnnouncementSheet";
 
-export default function Navbar({ user }: { user: any }) {
+type AnnouncementItem = {
+  id: string;
+  title: string;
+  content: string;
+  imageUrl?: string | null;
+  createdAt: Date | string;
+  author?: { name?: string | null } | null;
+  acks?: Array<{ userId: string }>;
+};
+
+export default function Navbar({
+  user,
+  announcements,
+  onAcknowledge,
+}: {
+  user: any;
+  announcements?: AnnouncementItem[];
+  onAcknowledge?: (formData: FormData) => void | Promise<void>;
+}) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    router.refresh();
+    setTimeout(() => window.location.reload(), 400);
+  };
+  const unreadCount = announcements
+    ? announcements.filter((a) => !a.acks || a.acks.length === 0).length
+    : 0;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -141,7 +173,29 @@ export default function Navbar({ user }: { user: any }) {
           </div>
           
           <div className="flex items-center">
-            <div className="hidden sm:flex items-center space-x-4">
+            <div className="hidden sm:flex items-center space-x-3">
+              {/* Refresh button */}
+              <button
+                type="button"
+                onClick={handleRefresh}
+                className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 border border-blue-200 flex items-center justify-center hover:brightness-105 transition-all"
+                aria-label="Refresh"
+              >
+                <RefreshCw
+                  className={`w-[18px] h-[18px] text-blue-700 ${isRefreshing ? "animate-spin" : ""}`}
+                  strokeWidth={2.5}
+                />
+              </button>
+
+              {/* Bell with AnnouncementSheet (only if announcements data provided) */}
+              {announcements && onAcknowledge && (
+                <AnnouncementSheet
+                  announcements={announcements}
+                  unreadCount={unreadCount}
+                  onAcknowledge={onAcknowledge}
+                />
+              )}
+
               <div className="flex flex-col items-end">
                 <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{displayName}</span>
                 <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tighter">
