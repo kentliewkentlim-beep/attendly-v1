@@ -10,7 +10,12 @@ import {
   Wallet,
   CalendarCheck,
   HelpCircle,
-  Shield
+  Shield,
+  Phone,
+  Mail,
+  Heart,
+  User as UserIcon,
+  Pencil,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -68,6 +73,9 @@ export default async function StaffProfilePage() {
   const displayName = getDisplayName(user as any);
   const secondaryName = getSecondaryName(user as any);
 
+  const hasEmergencyContact =
+    !!(user.emergencyContactName || user.emergencyContactPhone);
+
   return (
     <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <div className="space-y-8">
@@ -121,6 +129,88 @@ export default async function StaffProfilePage() {
           </div>
         </div>
 
+        {/* NEW: My Details card */}
+        <div className="card-base p-6">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <UserIcon size={16} className="text-blue-600" />
+              <h2 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em]">
+                My Details
+              </h2>
+            </div>
+            <Link
+              href="/staff/profile/edit"
+              className="inline-flex items-center gap-1.5 text-[11px] font-black text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full uppercase tracking-widest transition-colors"
+            >
+              <Pencil size={12} />
+              Edit
+            </Link>
+          </div>
+
+          <div className="mt-4 space-y-4">
+            {/* Phone */}
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-blue-50 text-blue-600 rounded-xl flex-shrink-0">
+                <Phone size={14} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  Phone
+                </p>
+                <p className="text-sm font-bold text-slate-700 mt-0.5 break-all">
+                  {user.phone}
+                </p>
+              </div>
+            </div>
+
+            {/* Email */}
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-purple-50 text-purple-600 rounded-xl flex-shrink-0">
+                <Mail size={14} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  Email
+                </p>
+                <p className={`text-sm font-bold mt-0.5 break-all ${user.email ? "text-slate-700" : "text-slate-400 italic"}`}>
+                  {user.email || "Not set"}
+                </p>
+              </div>
+            </div>
+
+            {/* Emergency Contact */}
+            <div className="flex items-start gap-3 pt-4 border-t border-slate-100">
+              <div className="p-2 bg-red-50 text-red-600 rounded-xl flex-shrink-0">
+                <Heart size={14} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-black text-red-600 uppercase tracking-widest">
+                  Emergency Contact
+                </p>
+                {hasEmergencyContact ? (
+                  <div className="mt-0.5 space-y-0.5">
+                    <p className="text-sm font-bold text-slate-700">
+                      {user.emergencyContactName || "â"}
+                      {user.emergencyContactRelation && (
+                        <span className="ml-2 text-[10px] font-bold text-slate-400 uppercase">
+                          ({user.emergencyContactRelation})
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs font-bold text-slate-500 break-all">
+                      {user.emergencyContactPhone || "No phone"}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm font-bold text-slate-400 italic mt-0.5">
+                    Not set â tap Edit to add
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Menu list â Settings is inline-expandable accordion with "Change Photo" sub-item */}
         <div className="card-base overflow-hidden">
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -163,7 +253,7 @@ export default async function StaffProfilePage() {
               <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
             </Link>
 
-            {/* Settings â expandable, contains Change Photo sub-item */}
+            {/* Settings â expandable, contains Change Photo sub-item + all old settings items */}
             <SettingsAccordion onUpload={handleUpload} />
 
             <Link
