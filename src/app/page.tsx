@@ -30,7 +30,8 @@ export default async function LoginPage({
       }
 
       if (user.role === "ADMIN") redirect("/admin");
-      if (user.role === "SUPERVISOR") redirect("/supervisor");
+      // Supervisors share the Staff UI — they see the same Home with an
+      // extra SupervisorToolsCard. No separate /supervisor landing.
       redirect("/staff");
     } else {
       redirect("/?error=Invalid credentials");
