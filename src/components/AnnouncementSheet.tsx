@@ -48,7 +48,7 @@ export default function AnnouncementSheet({
 
   return (
     <>
-      {/* Bell button â trigger */}
+      {/* Bell button — trigger */}
       <button
         type="button"
         onClick={() => setOpen(true)}
