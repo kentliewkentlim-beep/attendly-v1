@@ -151,7 +151,7 @@ export default async function EmployeeListPage({
         warnings.push({ row: rowNumber, phone, message: "Duplicate Phone in file (latest row wins)" });
       }
       seenPhones.add(phone);
-      if (!["STAFF", "SUPERVISOR", "ADMIN"].includes(role)) {
+      if (!["STAFF", "PROMOTER", "SUPERVISOR", "ADMIN"].includes(role)) {
         errors.push({ row: rowNumber, phone, message: `Invalid Role: ${role}` });
         continue;
       }
@@ -331,6 +331,7 @@ export default async function EmployeeListPage({
                 >
                   <option value="">Any Role</option>
                   <option value="STAFF">Staff</option>
+                  <option value="PROMOTER">Promoter</option>
                   <option value="SUPERVISOR">Supervisor</option>
                   <option value="ADMIN">Admin</option>
                 </select>
@@ -415,6 +416,7 @@ export default async function EmployeeListPage({
                         <span className={`inline-flex items-center text-[10px] font-black uppercase tracking-widest mb-1 ${
                           emp.role === "ADMIN" ? "text-red-600" :
                           emp.role === "SUPERVISOR" ? "text-purple-600" :
+                          emp.role === "PROMOTER" ? "text-amber-600" :
                           "text-blue-600"
                         }`}>
                           {emp.role === "SUPERVISOR" && <ShieldCheck size={10} className="mr-1" />}
