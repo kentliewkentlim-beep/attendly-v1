@@ -243,7 +243,7 @@ export default function SupervisorLeaveClient({
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right align-top">
-                        <LeaveActionModal leave={req} onAction={onLeaveAction} />
+                        <LeaveActionModal leave={req} coverage={req._coverage} onAction={onLeaveAction} />
                       </td>
                     </tr>
                   );
