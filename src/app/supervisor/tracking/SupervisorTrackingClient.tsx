@@ -14,6 +14,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import { format } from "date-fns";
+import { fmtTimeMY } from "@/lib/datetime";
 import { getDisplayName, getInitials, getSecondaryName } from "@/lib/displayName";
 
 export default function SupervisorTrackingClient({ 
@@ -187,7 +188,7 @@ export default function SupervisorTrackingClient({
                             </td>
                             <td className="px-6 py-4">
                               <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                                {att?.checkIn ? format(new Date(att.checkIn), "HH:mm") : "--:--"}
+                                {fmtTimeMY(att?.checkIn)}
                               </p>
                               <p className="text-[10px] text-slate-400 font-medium">
                                 {att?.checkIn ? format(new Date(att.checkIn), "MMM d") : "No record today"}
