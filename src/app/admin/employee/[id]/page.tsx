@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { fmtTimeMY } from "@/lib/datetime";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -239,10 +240,10 @@ export default async function EmployeeProfilePage({
                           {format(new Date(att.date), "EEE, MMM d")}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm tabular-nums text-slate-600 dark:text-slate-400">
-                          {att.checkIn ? format(att.checkIn, "HH:mm") : "--:--"}
+                          {fmtTimeMY(att.checkIn)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm tabular-nums text-slate-600 dark:text-slate-400">
-                          {att.checkOut ? format(att.checkOut, "HH:mm") : "--:--"}
+                          {fmtTimeMY(att.checkOut)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`status-badge ${att.isLate ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
