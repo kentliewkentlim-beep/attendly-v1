@@ -16,6 +16,15 @@ export default async function AdminDashboard() {
   const tz = hdrs.get("x-vercel-ip-timezone") || "Asia/Kuala_Lumpur";
   const nowLocal = new Date(new Date().toLocaleString("en-US", { timeZone: tz }));
   const today = format(nowLocal, "yyyy-MM-dd");
+  const fmtTime = (d: Date | string | null | undefined) =>
+    d
+      ? new Date(d).toLocaleTimeString("en-GB", {
+          timeZone: tz,
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })
+      : "--:--";
 
   // Stats
   // Total employees across ALL roles (Admin + Supervisor + Staff), excluding inactive accounts
@@ -143,9 +152,9 @@ export default async function AdminDashboard() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-slate-900 dark:text-white">{act.user.name}</p>
-                    <p className="text-[10px] text-slate-500">Checked In at {format(act.checkIn!, "HH:mm")}</p>
+                    <p className="text-[10px] text-slate-500">Checked In at {fmtTime(act.checkIn)}</p>
                   </div>
-                  <span className="ml-auto text-[10px] text-slate-400">{format(act.createdAt, "HH:mm")}</span>
+                  <span className="ml-auto text-[10px] text-slate-400">{fmtTime(act.createdAt)}</span>
                 </div>
               ))}
             </div>
@@ -182,7 +191,7 @@ export default async function AdminDashboard() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm tabular-nums font-medium">
-                        {format(att.checkIn!, "HH:mm")} - {att.checkOut ? format(att.checkOut, "HH:mm") : "--:--"}
+                        {fmtTime(att.checkIn)} - {fmtTime(att.checkOut)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`status-badge ${att.isLate ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>
