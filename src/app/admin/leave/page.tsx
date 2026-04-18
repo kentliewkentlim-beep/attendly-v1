@@ -25,6 +25,7 @@ import { computeLeaveCoverage } from "@/lib/leaveCoverage";
 import ExportButton from "@/components/ExportButton";
 import { FileDown } from "lucide-react";
 import { revalidatePath } from "next/cache";
+import Link from "next/link";
 
 export default async function AdminLeavePage({
   searchParams,
@@ -208,6 +209,13 @@ export default async function AdminLeavePage({
           <p className="text-slate-500 mt-1 font-medium">Review and manage employee leave requests and balances</p>
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            href="/admin/leave/coverage"
+            className="btn-secondary h-11 px-5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest"
+          >
+            <Users size={14} />
+            <span>Coverage Calendar</span>
+          </Link>
           <ExportButton
             data={exportData}
             filename={`leave_report_${format(new Date(), "yyyyMMdd")}`}
