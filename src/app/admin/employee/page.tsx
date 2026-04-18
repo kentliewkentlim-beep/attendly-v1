@@ -387,8 +387,16 @@ export default async function EmployeeListPage({
                   <tr key={emp.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 font-bold mr-4 border border-blue-100/50 dark:border-blue-900/30">
-                          {emp.name ? emp.name.split(' ').map(n => n[0]).join('').slice(0, 2) : "?"}
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 font-bold mr-4 border border-blue-100/50 dark:border-blue-900/30 overflow-hidden">
+                          {(emp as any).avatarUrl ? (
+                            <img
+                              src={`${(emp as any).avatarUrl}${(emp as any).avatarUrl.includes("?") ? "&" : "?"}v=${new Date(emp.updatedAt).getTime()}`}
+                              alt={emp.name || "Avatar"}
+                              className="w-10 h-10 object-cover"
+                            />
+                          ) : (
+                            emp.name ? emp.name.split(' ').map(n => n[0]).join('').slice(0, 2) : "?"
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{emp.name || "Unknown"}</p>
