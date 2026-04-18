@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Store, Save, MapPin, Phone } from "lucide-react";
+import { X, Store, Save, MapPin, Phone, Users } from "lucide-react";
 
 export default function OutletModal({ 
   outlet, 
@@ -22,6 +22,7 @@ export default function OutletModal({
   const [latitude, setLatitude] = useState<string>(outlet?.latitude?.toString?.() || "");
   const [longitude, setLongitude] = useState<string>(outlet?.longitude?.toString?.() || "");
   const [geofenceMeters, setGeofenceMeters] = useState<string>(outlet?.geofenceMeters?.toString?.() || "");
+  const [minStaffRequired, setMinStaffRequired] = useState<string>(outlet?.minStaffRequired?.toString?.() || "1");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
 
@@ -32,6 +33,7 @@ export default function OutletModal({
     setLatitude(outlet?.latitude?.toString?.() || "");
     setLongitude(outlet?.longitude?.toString?.() || "");
     setGeofenceMeters(outlet?.geofenceMeters?.toString?.() || "");
+    setMinStaffRequired(outlet?.minStaffRequired?.toString?.() || "1");
     setError("");
   }, [outlet, isOpen]);
 
@@ -50,6 +52,7 @@ export default function OutletModal({
         latitude: latitude.trim() ? Number(latitude) : null,
         longitude: longitude.trim() ? Number(longitude) : null,
         geofenceMeters: geofenceMeters.trim() ? Number(geofenceMeters) : null,
+        minStaffRequired: minStaffRequired.trim() ? Math.max(1, Math.round(Number(minStaffRequired))) : 1,
         companyId 
       });
       onClose();
@@ -172,6 +175,27 @@ export default function OutletModal({
               />
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2 ml-1">
                 If set with lat/lng, GPS check-in can be enforced.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Minimum Staff Required (per day)</label>
+              <div className="relative">
+                <div className="absolute top-3.5 left-3.5 text-slate-400">
+                  <Users size={16} />
+                </div>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  value={minStaffRequired}
+                  onChange={(e) => setMinStaffRequired(e.target.value)}
+                  placeholder="e.g. 3"
+                  className="block w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                />
+              </div>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2 ml-1">
+                Used for leave coverage warnings. Staff count below this triggers a red alert.
               </p>
             </div>
           </div>
