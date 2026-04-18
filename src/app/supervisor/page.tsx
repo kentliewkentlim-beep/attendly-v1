@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { fmtTimeMY } from "@/lib/datetime";
 import { redirect } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { revalidatePath } from "next/cache";
@@ -123,7 +124,7 @@ export default async function SupervisorDashboard({
     ...todayAttendance.filter(a => a.isLate).map(a => ({
       type: "LATE",
       message: `${a.user.name} clocked in late today`,
-      time: a.checkIn ? format(a.checkIn, "HH:mm") : ""
+      time: a.checkIn ? fmtTimeMY(a.checkIn) : ""
     })),
     ...companyStaff.filter(s => s.rosters[0]?.location && s.rosters[0].location !== "Office").map(s => ({
       type: "OFFSITE",
@@ -344,7 +345,7 @@ export default async function SupervisorDashboard({
                         {isOnLeave && <div className="w-2 h-2 rounded-full bg-amber-500" title="On Leave" />}
                       </div>
                       <span className="text-[9px] font-black text-slate-500 uppercase">
-                        {isPresent ? format(attendance.checkIn!, "HH:mm") : 
+                        {isPresent ? fmtTimeMY(attendance.checkIn) : 
                          isOnLeave ? "LEAVE" : "OUT"}
                       </span>
                     </div>
@@ -396,13 +397,13 @@ export default async function SupervisorDashboard({
                           <div className="text-center">
                             <p className="text-[9px] font-bold text-slate-400 uppercase">In</p>
                             <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                              {staff.attendances[0]?.checkIn ? format(staff.attendances[0].checkIn, "HH:mm") : "--:--"}
+                              {fmtTimeMY(staff.attendances[0]?.checkIn)}
                             </p>
                           </div>
                           <div className="text-center">
                             <p className="text-[9px] font-bold text-slate-400 uppercase">Out</p>
                             <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                              {staff.attendances[0]?.checkOut ? format(staff.attendances[0].checkOut, "HH:mm") : "--:--"}
+                              {fmtTimeMY(staff.attendances[0]?.checkOut)}
                             </p>
                           </div>
                         </div>
