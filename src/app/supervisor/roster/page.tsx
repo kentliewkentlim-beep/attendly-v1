@@ -39,6 +39,7 @@ export default async function SupervisorRosterPage() {
     where: {
       status: "APPROVED",
       userId: { in: staff.map(s => s.id) },
+      user: { status: "ACTIVE" },
     },
     select: {
       id: true,
