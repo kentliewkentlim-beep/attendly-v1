@@ -20,10 +20,30 @@ import {
   isToday,
   getDay
 } from "date-fns";
+import { getLeaveType, getDuration } from "@/lib/leaveTypes";
 
-export default function StaffCalendarClient({ rosters }: { rosters: any[] }) {
+export default function StaffCalendarClient({ rosters, leaves }: { rosters: any[]; leaves?: any[] }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // Return matching leave (if any) that covers the given calendar date
+  const getLeaveForDay = (date: Date) => {
+    if (!leaves) return null;
+    const dateMs = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    ).getTime();
+    return (
+      leaves.find((l: any) => {
+        const s = new Date(l.startDate);
+        const e = new Date(l.endDate);
+        const sMs = new Date(s.getFullYear(), s.getMonth(), s.getDate()).getTime();
+        const eMs = new Date(e.getFullYear(), e.getMonth(), e.getDate()).getTime();
+        return dateMs >= sMs && dateMs <= eMs;
+      }) || null
+    );
+  };
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
@@ -45,6 +65,7 @@ export default function StaffCalendarClient({ rosters }: { rosters: any[] }) {
   };
 
   const selectedRoster = getRosterForDay(selectedDate);
+  const selectedLeave = getLeaveForDay(selectedDate);
 
   // Calendar grid math
   const startDay = getDay(monthStart);
@@ -97,6 +118,9 @@ export default function StaffCalendarClient({ rosters }: { rosters: any[] }) {
             {blanks.map(b => <div key={`b-${b}`} className="aspect-square" />)}
             {daysInMonth.map(day => {
               const roster = getRosterForDay(day);
+              const leaveForDay = getLeaveForDay(day);
+              const leaveTypeDef = leaveForDay ? getLeaveType(leaveForDay.type) : null;
+              const isHalf = leaveForDay && (leaveForDay.durationType === "HALF_DAY_AM" || leaveForDay.durationType === "HALF_DAY_PM");
               const isSel = isSameDay(day, selectedDate);
               const isTod = isToday(day);
 
@@ -107,13 +131,26 @@ export default function StaffCalendarClient({ rosters }: { rosters: any[] }) {
                   className={`aspect-square relative flex flex-col items-center justify-center rounded-2xl transition-all border ${
                     isSel 
                       ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                      : isTod
-                        ? "bg-blue-50 border-blue-100 text-blue-600"
-                        : "bg-white dark:bg-slate-900 border-slate-50 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-blue-200"
+                      : leaveForDay && !isHalf
+                        ? "bg-red-50 border-red-200 text-red-700"
+                        : isTod
+                          ? "bg-blue-50 border-blue-100 text-blue-600"
+                          : "bg-white dark:bg-slate-900 border-slate-50 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-blue-200"
                   }`}
                 >
+                  {leaveForDay && (
+                    <span className={`absolute top-1 right-1 text-[7px] font-black uppercase px-1 py-0.5 rounded ${
+                      isSel ? "bg-white/20 text-white" : "bg-red-500 text-white"
+                    }`}>
+                      {leaveTypeDef?.shortLabel || "LV"}
+                      {isHalf && (leaveForDay.durationType === "HALF_DAY_AM" ? " AM" : " PM")}
+                    </span>
+                  )}
                   <span className={`text-sm font-black ${isSel ? "" : "tabular-nums"}`}>{format(day, "d")}</span>
-                  {roster && (
+                  {roster && !leaveForDay && (
+                    <div className={`absolute bottom-2 w-1.5 h-1.5 rounded-full ${isSel ? "bg-white" : getShiftColor(roster.shift)}`} />
+                  )}
+                  {roster && leaveForDay && isHalf && (
                     <div className={`absolute bottom-2 w-1.5 h-1.5 rounded-full ${isSel ? "bg-white" : getShiftColor(roster.shift)}`} />
                   )}
                 </button>
@@ -152,6 +189,22 @@ export default function StaffCalendarClient({ rosters }: { rosters: any[] }) {
                 {format(selectedDate, "EEEE, MMM d")}
               </h3>
 
+              {selectedLeave && (
+                <div className="mb-6 p-4 rounded-2xl border-2 border-red-200 bg-red-50">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`inline-flex items-center text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${getLeaveType(selectedLeave.type).badge}`}>
+                      {getLeaveType(selectedLeave.type).shortLabel}
+                    </span>
+                    <span className="text-[10px] font-black text-red-700 uppercase tracking-widest">On Leave</span>
+                    {(selectedLeave.durationType === "HALF_DAY_AM" || selectedLeave.durationType === "HALF_DAY_PM") && (
+                      <span className="inline-flex items-center text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                        {getDuration(selectedLeave.durationType).label}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-700">{getLeaveType(selectedLeave.type).label}</p>
+                </div>
+              )}
               {selectedRoster ? (
                 <div className="space-y-6">
                   <div className="flex items-center gap-4">
