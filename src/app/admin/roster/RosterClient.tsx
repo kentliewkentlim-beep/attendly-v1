@@ -24,22 +24,35 @@ import {
   subWeeks 
 } from "date-fns";
 import ExportButton from "@/components/ExportButton";
+import { getLeaveType } from "@/lib/leaveTypes";
 
 export default function RosterClient({ 
   companies,
   staff, 
-  rosters, 
+  rosters,
+  leaves = [],
   shiftTemplates,
   onSaveRoster,
   onCopyRoster
 }: { 
   companies: any[];
   staff: any[]; 
-  rosters: any[]; 
+  rosters: any[];
+  leaves?: any[];
   shiftTemplates: any[];
   onSaveRoster: (payload: { companyId: string; weekStart: string; items: any[] }) => Promise<void>;
   onCopyRoster: (payload: { companyId: string; fromStart: string; toStart: string }) => Promise<void>;
 }) {
+  // Lookup approved leave covering (userId, date). Null if none.
+  const getLeaveFor = (userId: string, date: Date) => {
+    const dStr = format(date, "yyyy-MM-dd");
+    return leaves.find((l: any) => {
+      if (l.userId !== userId) return false;
+      const s = format(new Date(l.startDate), "yyyy-MM-dd");
+      const e = format(new Date(l.endDate), "yyyy-MM-dd");
+      return dStr >= s && dStr <= e;
+    });
+  };
   const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>(companies?.[0]?.id || "");
   const [selectedShift, setSelectedShift] = useState<string>(shiftTemplates?.[0]?.name || "Off");
@@ -280,20 +293,40 @@ export default function RosterClient({
                   {weekDays.map((day) => {
                     const roster = getShiftForUserAndDate(member.id, day);
                     const shiftType = shiftTypes.find(t => t.name === roster?.shift);
+                    const leaveHit = getLeaveFor(member.id, day);
+                    const leaveTypeDef = leaveHit ? getLeaveType(leaveHit.type) : null;
+                    const isHalfAM = leaveHit?.durationType === "HALF_DAY_AM";
+                    const isHalfPM = leaveHit?.durationType === "HALF_DAY_PM";
                     return (
                       <td 
                         key={day.toString()} 
                         className="px-2 py-3 cursor-pointer group"
                         onClick={() => handleShiftClick(member.id, day)}
+                        title={leaveHit ? `On Leave (${leaveTypeDef?.shortLabel}${isHalfAM ? ' · AM' : isHalfPM ? ' · PM' : ''})` : undefined}
                       >
-                        <div className={`h-12 w-full rounded-xl flex items-center justify-center transition-all border-2 ${
-                          roster 
-                            ? `${shiftType?.color} scale-[0.98]` 
-                            : "border-dashed border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900 hover:bg-blue-50/50"
+                        <div className={`relative h-12 w-full rounded-xl flex items-center justify-center transition-all border-2 ${
+                          leaveHit
+                            ? "bg-red-50 border-red-200 text-red-700 scale-[0.98]"
+                            : roster
+                              ? `${shiftType?.color} scale-[0.98]` 
+                              : "border-dashed border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900 hover:bg-blue-50/50"
                         }`}>
-                          <span className="text-[10px] font-black uppercase tracking-wider">
-                            {roster ? roster.shift : ""}
-                          </span>
+                          {leaveHit ? (
+                            <span className="text-[10px] font-black uppercase tracking-wider flex items-center gap-0.5">
+                              {leaveTypeDef?.shortLabel || "LV"}
+                              {isHalfAM && <span className="text-[8px]">AM</span>}
+                              {isHalfPM && <span className="text-[8px]">PM</span>}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-black uppercase tracking-wider">
+                              {roster ? roster.shift : ""}
+                            </span>
+                          )}
+                          {leaveHit && roster && (
+                            <span className="absolute -bottom-0.5 right-1 text-[7px] font-bold text-slate-500 bg-white/90 rounded px-1">
+                              ({roster.shift})
+                            </span>
+                          )}
                         </div>
                       </td>
                     );
