@@ -27,6 +27,7 @@ import {
   endOfWeek,
   getDay
 } from "date-fns";
+import { fmtTimeMY, fmtTime12MY } from "@/lib/datetime";
 
 export default function StaffAttendanceClient({ attendances }: { attendances: any[] }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -175,10 +176,10 @@ export default function StaffAttendanceClient({ attendances }: { attendances: an
                           {isToday(day) && <span className="text-[8px] font-black text-blue-600 uppercase tracking-widest">Today</span>}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-xs font-black text-slate-700 dark:text-slate-300 tabular-nums">
-                          {att?.checkIn ? format(new Date(att.checkIn), "hh:mm a") : "--:--"}
+                          {fmtTime12MY(att?.checkIn)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-xs font-black text-slate-700 dark:text-slate-300 tabular-nums">
-                          {att?.checkOut ? format(new Date(att.checkOut), "hh:mm a") : "--:--"}
+                          {fmtTime12MY(att?.checkOut)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-xs font-black text-slate-700 dark:text-slate-300 tabular-nums">
                           {att?.checkIn && att?.checkOut ? `${calculateHours(att.checkIn, att.checkOut)} hrs` : "--"}
@@ -234,7 +235,7 @@ export default function StaffAttendanceClient({ attendances }: { attendances: an
                       )}
                       {att?.checkIn && (
                         <span className="text-[8px] font-bold text-slate-500 mt-0.5 hidden sm:block">
-                          {format(new Date(att.checkIn), "HH:mm")}
+                          {fmtTimeMY(att.checkIn)}
                         </span>
                       )}
                     </div>
