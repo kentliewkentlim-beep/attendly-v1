@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, XCircle, MessageSquare, X, MoreVertical, Calendar, Clock, Save } from "lucide-react";
+import { CheckCircle2, XCircle, MessageSquare, X, MoreVertical, Calendar, Clock, Save, Users, AlertTriangle, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
 import { getLeaveType, getDuration, leaveDays } from "@/lib/leaveTypes";
+import type { DateCoverage } from "@/lib/leaveCoverage";
 
 /**
  * Single entry point for reviewing / updating a leave request.
@@ -20,9 +21,11 @@ import { getLeaveType, getDuration, leaveDays } from "@/lib/leaveTypes";
 export default function LeaveActionModal({
   leave,
   onAction,
+  coverage,
 }: {
   leave: any;
   onAction: (id: string, status: string, note: string) => Promise<void>;
+  coverage?: DateCoverage[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<"APPROVED" | "REJECTED" | null>(null);
@@ -152,6 +155,66 @@ export default function LeaveActionModal({
                     </span>
                   </div>
                 </div>
+
+                {coverage && coverage.length > 0 && (
+                  <div className="flex items-start gap-3 pt-1">
+                    <Users size={16} className="text-slate-400 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                        Coverage Impact {isPending ? "(If Approved)" : "(At Approval)"}
+                      </p>
+                      <div className="space-y-1.5">
+                        {coverage.map((d) => {
+                          const bg =
+                            d.status === "CRITICAL"
+                              ? "bg-red-50 border-red-200 text-red-800"
+                              : d.status === "WARNING"
+                              ? "bg-amber-50 border-amber-200 text-amber-800"
+                              : "bg-emerald-50 border-emerald-200 text-emerald-800";
+                          const icon =
+                            d.status === "CRITICAL" ? (
+                              <ShieldAlert size={14} />
+                            ) : d.status === "WARNING" ? (
+                              <AlertTriangle size={14} />
+                            ) : (
+                              <CheckCircle2 size={14} />
+                            );
+                          return (
+                            <div key={d.date} className={`flex items-start gap-2 p-2.5 rounded-xl border text-[11px] ${bg}`}>
+                              <span className="mt-0.5">{icon}</span>
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between flex-wrap gap-1">
+                                  <span className="font-black uppercase tracking-wider">
+                                    {format(new Date(d.date + "T00:00:00"), "EEE, MMM d")}
+                                  </span>
+                                  <span className="font-black">
+                                    {d.workingIfApproved}/{d.totalStaff} working
+                                  </span>
+                                </div>
+                                <p className="text-[10px] font-bold opacity-80 mt-0.5">
+                                  {d.outletName} · Min required: {d.minRequired}
+                                  {d.othersOnLeaveCount > 0 && (
+                                    <> · {d.othersOnLeaveCount} other{d.othersOnLeaveCount === 1 ? "" : "s"} on leave ({d.othersOnLeaveNames.slice(0, 3).join(", ")}{d.othersOnLeaveNames.length > 3 ? "…" : ""})</>
+                                  )}
+                                </p>
+                                {d.status === "CRITICAL" && (
+                                  <p className="text-[10px] font-black uppercase tracking-widest mt-1">
+                                    ⚠ Below minimum — approving will leave outlet understaffed
+                                  </p>
+                                )}
+                                {d.status === "WARNING" && (
+                                  <p className="text-[10px] font-black uppercase tracking-widest mt-1">
+                                    ⚠ Exactly at minimum — no buffer
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Action Section */}
