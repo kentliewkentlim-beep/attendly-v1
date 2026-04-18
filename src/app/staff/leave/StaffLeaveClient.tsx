@@ -15,6 +15,14 @@ import {
   AlertCircle
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
+import {
+  LEAVE_TYPE_OPTIONS,
+  LEAVE_TYPES,
+  DURATION_TYPES,
+  getLeaveType,
+  leaveDays,
+} from "@/lib/leaveTypes";
+import type { LeaveTypeCode, DurationType } from "@/lib/leaveTypes";
 
 export default function StaffLeaveClient({ 
   leaveBalance, 
@@ -28,7 +36,8 @@ export default function StaffLeaveClient({
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [leaveType, setLeaveType] = useState("ANNUAL");
+  const [leaveType, setLeaveType] = useState<LeaveTypeCode>("AL");
+  const [durationType, setDurationType] = useState<DurationType>("FULL_DAY");
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -37,17 +46,21 @@ export default function StaffLeaveClient({
     if (!startDate || !endDate) return;
     
     setIsSubmitting(true);
+    // Half-day must be same-day — snap endDate to startDate
+    const effectiveEnd = durationType === "FULL_DAY" ? new Date(endDate) : new Date(startDate);
     await onApplyLeave({
       startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      endDate: effectiveEnd,
       type: leaveType,
+      durationType,
       reason
     });
     setIsSubmitting(false);
     setIsApplyModalOpen(false);
     setStartDate("");
     setEndDate("");
-    setLeaveType("ANNUAL");
+    setLeaveType("AL");
+    setDurationType("FULL_DAY");
     setReason("");
   };
 
@@ -90,18 +103,15 @@ export default function StaffLeaveClient({
 
           <div className="card-base p-6 space-y-4">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Leave Types</h3>
-            {[
-              { label: "Annual Leave", balance: leaveBalance, color: "bg-emerald-500" },
-              { label: "Medical Leave", balance: "14", color: "bg-red-500" },
-              { label: "Emergency", balance: "3", color: "bg-orange-500" },
-              { label: "Unpaid", balance: "∞", color: "bg-slate-400" },
-            ].map(type => (
-              <div key={type.label} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+            {LEAVE_TYPE_OPTIONS.map(type => (
+              <div key={type.code} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${type.color}`} />
+                  <div className={`w-2 h-2 rounded-full ${type.dot}`} />
                   <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{type.label}</span>
                 </div>
-                <span className="text-xs font-black text-slate-900 dark:text-white">{type.balance} Days</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">
+                  {type.code === "AL" ? `${leaveBalance} left` : type.deducts ? "Deducts" : "No deduct"}
+                </span>
               </div>
             ))}
           </div>
@@ -124,15 +134,29 @@ export default function StaffLeaveClient({
                 </div>
               ) : (
                 leaveHistory.map((leave) => {
-                  const days = differenceInDays(new Date(leave.endDate), new Date(leave.startDate)) + 1;
+                  const typeDef = getLeaveType(leave.type);
+                  const totalDays = leaveDays(leave.startDate, leave.endDate, leave.durationType);
+                  const isHalfAM = leave.durationType === "HALF_DAY_AM";
+                  const isHalfPM = leave.durationType === "HALF_DAY_PM";
                   return (
                     <div key={leave.id} className="p-6 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all group">
                       <div className="flex justify-between items-start mb-2">
                         <div className="space-y-1">
                           <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                            {format(new Date(leave.startDate), "MMM d")} - {format(new Date(leave.endDate), "MMM d, yyyy")}
+                            {format(new Date(leave.startDate), "MMM d")}
+                            {!isHalfAM && !isHalfPM && ` - ${format(new Date(leave.endDate), "MMM d, yyyy")}`}
+                            {(isHalfAM || isHalfPM) && `, ${format(new Date(leave.startDate), "yyyy")}`}
                           </h4>
-                          <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{days} Days • {leave.type || "Annual"}</p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`inline-flex items-center text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${typeDef.badge}`}>
+                              {typeDef.shortLabel}
+                            </span>
+                            {isHalfAM && <span className="inline-flex items-center text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Half · AM</span>}
+                            {isHalfPM && <span className="inline-flex items-center text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">Half · PM</span>}
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                              {totalDays} {totalDays === 1 ? "Day" : "Days"}
+                            </span>
+                          </div>
                         </div>
                         <span className={`status-badge border text-[10px] font-black ${getStatusBadge(leave.status)}`}>
                           {leave.status}
@@ -171,14 +195,53 @@ export default function StaffLeaveClient({
                   <select 
                     required
                     value={leaveType}
-                    onChange={(e) => setLeaveType(e.target.value)}
+                    onChange={(e) => {
+                      const v = e.target.value as LeaveTypeCode;
+                      setLeaveType(v);
+                      // CO must be full day
+                      if (v === "CO") setDurationType("FULL_DAY");
+                    }}
                     className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                   >
-                    <option value="ANNUAL">Annual Leave</option>
-                    <option value="MEDICAL">Medical Leave (MC)</option>
-                    <option value="EMERGENCY">Emergency Leave</option>
-                    <option value="UNPAID">Unpaid Leave</option>
+                    {LEAVE_TYPE_OPTIONS.map(t => (
+                      <option key={t.code} value={t.code}>{t.code} — {t.label}</option>
+                    ))}
                   </select>
+                </div>
+
+                {/* Duration: Full Day / Half AM / Half PM */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Duration</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(Object.keys(DURATION_TYPES) as DurationType[]).map((key) => {
+                      const d = DURATION_TYPES[key];
+                      const disabled = key !== "FULL_DAY" && !LEAVE_TYPES[leaveType].allowHalf;
+                      const selected = durationType === key;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => setDurationType(key)}
+                          className={`px-3 py-3 rounded-xl text-xs font-black uppercase tracking-wider border transition-all ${
+                            selected
+                              ? "bg-blue-600 text-white border-blue-600 shadow"
+                              : disabled
+                                ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
+                                : "bg-white text-slate-600 border-slate-200 hover:border-blue-400"
+                          }`}
+                        >
+                          {d.short}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {!LEAVE_TYPES[leaveType].allowHalf && (
+                    <p className="text-[10px] text-slate-500 mt-1.5 ml-1">{LEAVE_TYPES[leaveType].label} must be full day</p>
+                  )}
+                  {durationType !== "FULL_DAY" && (
+                    <p className="text-[10px] text-amber-700 font-bold mt-1.5 ml-1">Half-day deducts 0.5 day · start and end must be same date (auto-synced)</p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -215,7 +278,7 @@ export default function StaffLeaveClient({
                   />
                 </div>
 
-                {leaveType === "MEDICAL" && (
+                {leaveType === "MC" && (
                   <div className="p-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center gap-2 group cursor-pointer hover:border-blue-500 transition-all">
                     <Paperclip size={20} className="text-slate-400 group-hover:text-blue-500" />
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest group-hover:text-blue-600">Attach MC Document</span>
