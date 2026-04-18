@@ -15,6 +15,7 @@ import {
   LogIn
 } from "lucide-react";
 import { format } from "date-fns";
+import { fmtTimeMY } from "@/lib/datetime";
 import { AutoSubmit } from "@/components/AutoSubmit";
 import { getDisplayName, getInitials, getSecondaryName } from "@/lib/displayName";
 
@@ -150,7 +151,7 @@ export default function SupervisorStaffClient({
                                 {attendance.isLate ? <AlertCircle size={12} /> : <CheckCircle2 size={12} />}
                                 {attendance.isLate ? 'Late' : 'Present'}
                               </span>
-                              <span className="text-[10px] font-bold text-slate-400">{format(new Date(attendance.checkIn), "HH:mm")}</span>
+                              <span className="text-[10px] font-bold text-slate-400">{fmtTimeMY(attendance.checkIn)}</span>
                             </div>
                           ) : isOnLeave ? (
                             <span className="status-badge bg-amber-50 text-amber-700">On Leave</span>
