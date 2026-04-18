@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth } from "date-fns";
 import ExportButton from "@/components/ExportButton";
+import { fmtTimeMY } from "@/lib/datetime";
 import { getDisplayName, getInitials, getSecondaryName } from "@/lib/displayName";
 
 export default function SupervisorReportClient({ 
@@ -56,8 +57,8 @@ export default function SupervisorReportClient({
     Employee: getDisplayName(record.user),
     Phone: record.user.phone,
     Outlet: record.user.outlet?.name || "N/A",
-    "Check In": record.checkIn ? format(new Date(record.checkIn), "HH:mm") : "-",
-    "Check Out": record.checkOut ? format(new Date(record.checkOut), "HH:mm") : "-",
+    "Check In": fmtTimeMY(record.checkIn) || "-",
+    "Check Out": fmtTimeMY(record.checkOut) || "-",
     Status: record.isLate ? "LATE" : (record.checkIn ? "PRESENT" : "ABSENT")
   }));
 
@@ -199,13 +200,13 @@ export default function SupervisorReportClient({
                         <div className="text-center">
                           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">In</p>
                           <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                            {record.checkIn ? format(new Date(record.checkIn), "HH:mm") : "--:--"}
+                            {fmtTimeMY(record.checkIn)}
                           </p>
                         </div>
                         <div className="text-center">
                           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Out</p>
                           <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                            {record.checkOut ? format(new Date(record.checkOut), "HH:mm") : "--:--"}
+                            {fmtTimeMY(record.checkOut)}
                           </p>
                         </div>
                       </div>
