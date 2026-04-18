@@ -26,21 +26,33 @@ import {
   subWeeks
 } from "date-fns";
 import { getDisplayName, getInitials } from "@/lib/displayName";
+import { getLeaveType } from "@/lib/leaveTypes";
 import ExportButton from "@/components/ExportButton";
 
 export default function SupervisorRosterClient({ 
   staff, 
   rosters,
+  leaves = [],
   shiftTemplates,
   onSaveRoster,
   onCopyRoster
 }: { 
   staff: any[]; 
   rosters: any[];
+  leaves?: any[];
   shiftTemplates: any[];
   onSaveRoster: (payload: { staffIds: string[]; monthStart: string; monthEnd: string; items: any[] }) => Promise<void>;
   onCopyRoster: (payload: { staffIds: string[]; fromStart: string; toStart: string }) => Promise<void>;
 }) {
+  // Lookup: for (userId, YYYY-MM-DD) return matching approved leave, if any
+  const getLeaveFor = (userId: string, dateStr: string) => {
+    return leaves.find((l: any) => {
+      if (l.userId !== userId) return false;
+      const s = format(new Date(l.startDate), "yyyy-MM-dd");
+      const e = format(new Date(l.endDate), "yyyy-MM-dd");
+      return dateStr >= s && dateStr <= e;
+    });
+  };
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedShift, setSelectedShift] = useState<string>(shiftTemplates?.[0]?.name || "Off");
   const [isSaving, setIsSaving] = useState(false);
@@ -290,6 +302,10 @@ export default function SupervisorRosterClient({
                     const roster = localRosters.find((r) => r.userId === member.id && r.date === dateStr);
                     const isSelected = selectedCells.includes(cellKey);
                     const shiftType = shiftTypes.find(t => t.name === roster?.shift);
+                    const leaveHit = getLeaveFor(member.id, dateStr);
+                    const leaveTypeDef = leaveHit ? getLeaveType(leaveHit.type) : null;
+                    const isHalfAM = leaveHit?.durationType === "HALF_DAY_AM";
+                    const isHalfPM = leaveHit?.durationType === "HALF_DAY_PM";
 
                     return (
                       <td 
@@ -297,12 +313,29 @@ export default function SupervisorRosterClient({
                         onClick={(e) => handleCellClick(member.id, day, e)}
                         className={`p-1 border-r border-slate-100 dark:border-slate-800 cursor-pointer select-none transition-all ${
                           isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/50' : ''
-                        } ${isSameDay(day, new Date()) ? 'bg-blue-50/20' : ''}`}
+                        } ${isSameDay(day, new Date()) ? 'bg-blue-50/20' : ''} ${
+                          leaveHit ? 'bg-red-50/70' : ''
+                        }`}
+                        title={leaveHit ? `On Leave (${leaveTypeDef?.shortLabel}${isHalfAM ? ' · AM' : isHalfPM ? ' · PM' : ''})` : undefined}
                       >
-                        <div className={`h-8 w-full rounded-lg flex items-center justify-center text-[9px] font-black uppercase transition-all ${
+                        <div className={`relative h-8 w-full rounded-lg flex items-center justify-center text-[9px] font-black uppercase transition-all ${
+                          leaveHit ? 'bg-red-100 text-red-700 border border-red-200' :
                           roster ? shiftType?.color : 'hover:bg-slate-50'
                         }`}>
-                          {roster ? getShiftAbbrev(roster.shift) : ""}
+                          {leaveHit ? (
+                            <span className="flex items-center gap-0.5">
+                              {leaveTypeDef?.shortLabel || "LV"}
+                              {isHalfAM && <span className="text-[7px]">AM</span>}
+                              {isHalfPM && <span className="text-[7px]">PM</span>}
+                            </span>
+                          ) : (
+                            roster ? getShiftAbbrev(roster.shift) : ""
+                          )}
+                          {leaveHit && roster && (
+                            <span className="absolute -bottom-0.5 right-0.5 text-[6px] font-bold text-slate-400 bg-white/80 rounded px-0.5">
+                              ({getShiftAbbrev(roster.shift)})
+                            </span>
+                          )}
                         </div>
                       </td>
                     );
