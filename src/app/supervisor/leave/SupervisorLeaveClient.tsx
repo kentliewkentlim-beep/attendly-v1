@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import LeaveActionModal from "@/components/LeaveActionModal";
+import { getLeaveType, leaveDays } from "@/lib/leaveTypes";
 import { getDisplayName, getInitials, getSecondaryName } from "@/lib/displayName";
 
 export default function SupervisorLeaveClient({ 
@@ -185,7 +186,11 @@ export default function SupervisorLeaveClient({
                 </tr>
               ) : (
                 filteredRequests.map((req) => {
-                  const days = differenceInDays(new Date(req.endDate), new Date(req.startDate)) + 1;
+                  const typeDef = getLeaveType(req.type);
+                  const durAny = req.durationType;
+                  const days = leaveDays(req.startDate, req.endDate, durAny);
+                  const isHalfAM = durAny === "HALF_DAY_AM";
+                  const isHalfPM = durAny === "HALF_DAY_PM";
                   return (
                     <tr key={req.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -203,29 +208,42 @@ export default function SupervisorLeaveClient({
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="space-y-1">
+                        <div className="space-y-1.5">
                           <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                            {format(new Date(req.startDate), "MMM d")} - {format(new Date(req.endDate), "MMM d, yyyy")}
+                            {format(new Date(req.startDate), "MMM d")}
+                            {!isHalfAM && !isHalfPM && ` - ${format(new Date(req.endDate), "MMM d, yyyy")}`}
+                            {(isHalfAM || isHalfPM) && `, ${format(new Date(req.startDate), "yyyy")}`}
                           </p>
-                          <p className="text-[10px] text-slate-400 font-bold">{days} {days === 1 ? 'Day' : 'Days'}</p>
+                          <div className="flex items-center gap-1 flex-wrap">
+                            <span className={`inline-flex items-center text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${typeDef.badge}`}>
+                              {typeDef.shortLabel}
+                            </span>
+                            {isHalfAM && <span className="inline-flex items-center text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Half · AM</span>}
+                            {isHalfPM && <span className="inline-flex items-center text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">Half · PM</span>}
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+                              {days} {days === 1 ? 'Day' : 'Days'}
+                            </span>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <p className="text-xs text-slate-600 dark:text-slate-400 italic line-clamp-1">"{req.reason || "No reason"}"</p>
+                      <td className="px-6 py-4 align-top">
+                        <div className="max-w-sm">
+                          <p className="text-xs text-slate-600 dark:text-slate-400 italic whitespace-pre-wrap break-words">"{req.reason || "No reason"}"</p>
+                          {req.supervisorNote && (
+                            <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium flex items-start gap-1 mt-2 whitespace-pre-wrap break-words">
+                              <MessageSquare size={10} className="mt-0.5 flex-shrink-0" />
+                              <span>{req.supervisorNote}</span>
+                            </p>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`status-badge border ${getStatusBadge(req.status)}`}>
                           {req.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        {req.status === "PENDING" ? (
-                          <LeaveActionModal leave={req} onAction={onLeaveAction} />
-                        ) : (
-                          <button className="p-2 text-slate-300 cursor-not-allowed">
-                            <MoreVertical size={18} />
-                          </button>
-                        )}
+                      <td className="px-6 py-4 whitespace-nowrap text-right align-top">
+                        <LeaveActionModal leave={req} onAction={onLeaveAction} />
                       </td>
                     </tr>
                   );
