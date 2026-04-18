@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { fmtIsoDateTimeMY } from "@/lib/datetime";
 import { 
   CalendarCheck, 
   Search, 
@@ -84,7 +85,7 @@ export default async function AdminLeavePage({
       "Supervisor Note": l.supervisorNote || "",
       "Applied Date":
         l.createdAt && isValid(new Date(l.createdAt))
-          ? format(new Date(l.createdAt), "yyyy-MM-dd HH:mm")
+          ? fmtIsoDateTimeMY(l.createdAt)
           : "",
       "Remaining Balance (days)": l.user?.leaveBalance ?? 0,
     };
