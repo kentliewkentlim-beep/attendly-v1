@@ -63,6 +63,7 @@ model Outlet {
   latitude          Float?
   longitude         Float?
   geofenceMeters    Int?
+  minStaffRequired  Int                @default(1) // Minimum staff needed per day for leave coverage warnings
   company           Company?           @relation(fields: [companyId], references: [id])
   companyId         String?
   users             User[]
