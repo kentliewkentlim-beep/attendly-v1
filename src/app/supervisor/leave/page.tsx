@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import SupervisorLeaveClient from "./SupervisorLeaveClient";
 import { differenceInDays } from "date-fns";
 import { getLeaveType, leaveDays } from "@/lib/leaveTypes";
+import { computeLeaveCoverage } from "@/lib/leaveCoverage";
 import { getAllowedOutletIds } from "@/lib/supervisorOutlets";
 
 export default async function SupervisorLeavePage() {
@@ -47,6 +48,56 @@ export default async function SupervisorLeavePage() {
     },
     orderBy: { createdAt: "desc" }
   });
+
+  // --- Coverage data for LeaveActionModal Coverage Impact panel ---
+  const [allActiveStaff, coverageOutlets, allApprovedLeaves] = await Promise.all([
+    prisma.user.findMany({
+      where: {
+        status: "ACTIVE",
+        role: { in: ["STAFF", "PROMOTER", "SUPERVISOR"] },
+        outletId: { not: null },
+        companyId: user.companyId,
+      },
+      select: { id: true, outletId: true },
+    }),
+    prisma.outlet.findMany({
+      where: { companyId: user.companyId },
+      select: { id: true, name: true, minStaffRequired: true } as any,
+    }) as any,
+    prisma.leave.findMany({
+      where: {
+        status: "APPROVED",
+        user: { companyId: user.companyId },
+      },
+      select: {
+        id: true,
+        startDate: true,
+        endDate: true,
+        user: { select: { id: true, name: true, outletId: true } },
+      },
+    }),
+  ]);
+  const outletsNormalized = (coverageOutlets as any[]).map((o) => ({
+    id: String(o.id),
+    name: o.name,
+    minStaffRequired: typeof o.minStaffRequired === "number" ? o.minStaffRequired : 1,
+  }));
+  const staffNormalized = allActiveStaff.map((s: any) => ({ id: s.id, outletId: s.outletId != null ? String(s.outletId) : null }));
+  const approvedLeavesNormalized = allApprovedLeaves.map((l: any) => ({
+    id: l.id,
+    startDate: l.startDate,
+    endDate: l.endDate,
+    user: { id: l.user.id, name: l.user.name, outletId: l.user.outletId != null ? String(l.user.outletId) : null },
+  }));
+  const leaveRequestsWithCoverage = leaveRequests.map((l: any) => ({
+    ...l,
+    _coverage: computeLeaveCoverage({
+      leave: { id: l.id, startDate: l.startDate, endDate: l.endDate, user: { outletId: l.user?.outletId != null ? String(l.user.outletId) : null } },
+      allStaff: staffNormalized,
+      approvedLeaves: approvedLeavesNormalized,
+      outlets: outletsNormalized,
+    }),
+  }));
 
   async function handleLeaveAction(id: string, status: string, note: string) {
     "use server";
@@ -124,7 +175,7 @@ export default async function SupervisorLeavePage() {
   return (
     <SupervisorLeaveClient 
       staff={staff}
-      leaveRequests={leaveRequests}
+      leaveRequests={leaveRequestsWithCoverage}
       onLeaveAction={handleLeaveAction}
       onApplyLeave={handleApplyLeave}
     />
