@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import SupervisorLeaveClient from "./SupervisorLeaveClient";
 import { differenceInDays } from "date-fns";
+import { getLeaveType, leaveDays } from "@/lib/leaveTypes";
 import { getAllowedOutletIds } from "@/lib/supervisorOutlets";
 
 export default async function SupervisorLeavePage() {
@@ -56,13 +57,26 @@ export default async function SupervisorLeavePage() {
       where: { id },
       include: { user: true }
     });
+    if (!leave) return;
 
-    if (status === "APPROVED" && leave) {
-      const days = differenceInDays(new Date(leave.endDate), new Date(leave.startDate)) + 1;
-      await prisma.user.update({
-        where: { id: leave.userId },
-        data: { leaveBalance: { decrement: days } }
-      });
+    const typeDef = getLeaveType(leave.type);
+    const days = leaveDays(leave.startDate, leave.endDate, (leave as any).durationType);
+    const wasApproved = leave.status === "APPROVED";
+    const willBeApproved = status === "APPROVED";
+
+    // Balance: AL/MC/EL deduct; UL/CO do not. Only APPROVED deducts.
+    if (typeDef.deducts) {
+      if (!wasApproved && willBeApproved) {
+        await prisma.user.update({
+          where: { id: leave.userId },
+          data: { leaveBalance: { decrement: days } }
+        });
+      } else if (wasApproved && !willBeApproved) {
+        await prisma.user.update({
+          where: { id: leave.userId },
+          data: { leaveBalance: { increment: days } }
+        });
+      }
     }
 
     await prisma.leave.update({
@@ -78,22 +92,30 @@ export default async function SupervisorLeavePage() {
     const sessionUser = await getCurrentUser();
     if (!sessionUser) return;
     
-    const leave = await prisma.leave.create({
+    const type = data.type || "AL";
+    const durationType = data.durationType || "FULL_DAY";
+
+    await prisma.leave.create({
       data: {
         userId: data.userId,
         startDate: data.startDate,
         endDate: data.endDate,
+        type,
+        durationType,
         reason: data.reason,
         status: data.status
       }
     });
 
     if (data.status === "APPROVED") {
-      const days = differenceInDays(new Date(data.endDate), new Date(data.startDate)) + 1;
-      await prisma.user.update({
-        where: { id: data.userId },
-        data: { leaveBalance: { decrement: days } }
-      });
+      const typeDef = getLeaveType(type);
+      if (typeDef.deducts) {
+        const days = leaveDays(data.startDate, data.endDate, durationType);
+        await prisma.user.update({
+          where: { id: data.userId },
+          data: { leaveBalance: { decrement: days } }
+        });
+      }
     }
 
     revalidatePath("/supervisor/leave");
