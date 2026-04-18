@@ -75,18 +75,39 @@ export default async function SupervisorRosterPage() {
       },
     });
 
-    const items = (payload.items || []).map((item: any) => {
-      const dateStr = String(item.date);
-      const date = new Date(`${dateStr}T00:00:00.000Z`);
-      return {
-        id: `roster-${item.userId}-${dateStr}`,
-        userId: item.userId,
-        date,
-        shift: item.shift,
-        outletId: item.outletId || null,
-        location: item.location || null,
-      };
+    // Leaves within window — skip shift items that would land on an approved leave
+    const leavesInWindow = await prisma.leave.findMany({
+      where: {
+        status: "APPROVED",
+        userId: { in: staffIds },
+        OR: [
+          { startDate: { lte: endDate }, endDate: { gte: startDate } },
+        ],
+      },
+      select: { userId: true, startDate: true, endDate: true },
     });
+    const isLeaveDay = (userId: string, dateStr: string) =>
+      leavesInWindow.some((l) => {
+        if (l.userId !== userId) return false;
+        const s = l.startDate.toISOString().slice(0, 10);
+        const e = l.endDate.toISOString().slice(0, 10);
+        return dateStr >= s && dateStr <= e;
+      });
+
+    const items = (payload.items || [])
+      .filter((item: any) => !isLeaveDay(item.userId, String(item.date)))
+      .map((item: any) => {
+        const dateStr = String(item.date);
+        const date = new Date(`${dateStr}T00:00:00.000Z`);
+        return {
+          id: `roster-${item.userId}-${dateStr}`,
+          userId: item.userId,
+          date,
+          shift: item.shift,
+          outletId: item.outletId || null,
+          location: item.location || null,
+        };
+      });
 
     if (items.length > 0) {
       await prisma.roster.createMany({ data: items, skipDuplicates: true });
@@ -127,20 +148,43 @@ export default async function SupervisorRosterPage() {
       },
     });
 
-    const items = lastWeekRosters.map((oldRoster) => {
-      const daysDiff = differenceInCalendarDays(oldRoster.date, fromStartDate);
-      const newDate = addDays(toStartDate, daysDiff);
-      newDate.setUTCHours(0, 0, 0, 0);
-      const newDateStr = format(newDate, "yyyy-MM-dd");
-      return {
-        id: `roster-${oldRoster.userId}-${newDateStr}`,
-        userId: oldRoster.userId,
-        date: newDate,
-        shift: oldRoster.shift,
-        outletId: oldRoster.outletId || null,
-        location: oldRoster.location || null,
-      };
+    // Approved leaves in the target week — skip copying shifts into leave days
+    const leavesInTarget = await prisma.leave.findMany({
+      where: {
+        status: "APPROVED",
+        userId: { in: staffIds },
+        OR: [
+          { startDate: { lte: toEnd }, endDate: { gte: toStartDate } },
+        ],
+      },
+      select: { userId: true, startDate: true, endDate: true },
     });
+    const isLeaveDay = (userId: string, dateStr: string) =>
+      leavesInTarget.some((l) => {
+        if (l.userId !== userId) return false;
+        const s = l.startDate.toISOString().slice(0, 10);
+        const e = l.endDate.toISOString().slice(0, 10);
+        return dateStr >= s && dateStr <= e;
+      });
+
+    const items = lastWeekRosters
+      .map((oldRoster) => {
+        const daysDiff = differenceInCalendarDays(oldRoster.date, fromStartDate);
+        const newDate = addDays(toStartDate, daysDiff);
+        newDate.setUTCHours(0, 0, 0, 0);
+        const newDateStr = format(newDate, "yyyy-MM-dd");
+        return {
+          id: `roster-${oldRoster.userId}-${newDateStr}`,
+          userId: oldRoster.userId,
+          date: newDate,
+          shift: oldRoster.shift,
+          outletId: oldRoster.outletId || null,
+          location: oldRoster.location || null,
+          _dateStr: newDateStr,
+        };
+      })
+      .filter((item: any) => !isLeaveDay(item.userId, item._dateStr))
+      .map(({ _dateStr, ...rest }: any) => rest);
 
     if (items.length > 0) {
       await prisma.roster.createMany({ data: items, skipDuplicates: true });
