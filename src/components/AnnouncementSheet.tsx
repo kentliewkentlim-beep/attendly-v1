@@ -26,6 +26,7 @@ export default function AnnouncementSheet({
 }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
 
   // Portal target is only available after client mount
   useEffect(() => {
@@ -75,7 +76,7 @@ export default function AnnouncementSheet({
       />
 
       {/* Sheet */}
-      <div className="relative w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl bg-white shadow-2xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-200">
+      <div className="relative w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl bg-white shadow-2xl max-h-[90vh] flex flex-col animate-in slide-in-from-bottom duration-200">
         {/* Handle + Header */}
         <div className="flex flex-col items-center pt-3 px-5 border-b border-slate-100">
           <div className="w-10 h-1 rounded-full bg-slate-200 sm:hidden mb-3" />
@@ -176,11 +177,18 @@ export default function AnnouncementSheet({
                     {ann.content}
                   </p>
                   {ann.imageUrl && (
-                    <img
-                      src={ann.imageUrl}
-                      alt=""
-                      className="mt-3 w-full max-h-56 object-cover rounded-xl border border-slate-200"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setZoomImage(ann.imageUrl!)}
+                      className="mt-3 w-full block cursor-zoom-in group/img"
+                      aria-label="View full image"
+                    >
+                      <img
+                        src={ann.imageUrl}
+                        alt=""
+                        className="w-full max-h-[60vh] object-contain rounded-xl border border-slate-200 bg-slate-50 transition-transform group-hover/img:scale-[1.01]"
+                      />
+                    </button>
                   )}
                   <div className="flex items-center justify-between mt-3">
                     {ann.author?.name && (
@@ -215,6 +223,32 @@ export default function AnnouncementSheet({
           )}
         </div>
       </div>
+
+      {/* Image zoom overlay (on top of sheet) */}
+      {zoomImage && (
+        <div
+          className="fixed inset-0 z-[80] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 cursor-zoom-out animate-in fade-in duration-150"
+          onClick={() => setZoomImage(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Announcement image"
+        >
+          <img
+            src={zoomImage}
+            alt=""
+            className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            type="button"
+            onClick={() => setZoomImage(null)}
+            className="absolute top-4 right-4 sm:top-6 sm:right-6 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
     </div>
   ) : null;
 
