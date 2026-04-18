@@ -84,6 +84,15 @@ export default function RosterClient({
   const staffById = new Map(filteredStaff.map((s: any) => [s.id, s]));
   const handleShiftClick = (userId: string, date: Date) => {
     const dateStr = format(date, "yyyy-MM-dd");
+
+    // Guard: don't assign a shift on days already covered by an approved leave.
+    const leaveHit = getLeaveFor(userId, date);
+    if (leaveHit) {
+      const tCode = getLeaveType(leaveHit.type).shortLabel;
+      alert(`This staff is on approved leave (${tCode}) for ${dateStr}. Cannot assign shift.`);
+      return;
+    }
+
     const existingIndex = localRosters.findIndex((r) => r.userId === userId && r.date === dateStr);
     
     let newRosters = [...localRosters];
