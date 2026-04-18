@@ -18,6 +18,19 @@ export default async function AdminRosterPage() {
     orderBy: { date: "asc" }
   });
 
+  // Approved leaves for overlay on the roster grid.
+  const approvedLeaves = await prisma.leave.findMany({
+    where: { status: "APPROVED" },
+    select: {
+      id: true,
+      userId: true,
+      startDate: true,
+      endDate: true,
+      type: true,
+      durationType: true,
+    },
+  });
+
   const shiftTemplates = await prisma.shiftTemplate.findMany({
     include: { company: true }
   });
@@ -126,7 +139,8 @@ export default async function AdminRosterPage() {
     <RosterClient 
       companies={companies}
       staff={staff} 
-      rosters={rosters} 
+      rosters={rosters}
+      leaves={approvedLeaves}
       shiftTemplates={shiftTemplates}
       onSaveRoster={handleSaveRoster}
       onCopyRoster={handleCopyRoster}
