@@ -19,6 +19,7 @@ export default async function CompaniesPage() {
             address: true,
             phone: true,
             companyId: true,
+            minStaffRequired: true,
             ...(includeGps
               ? { latitude: true, longitude: true, geofenceMeters: true }
               : {}),
@@ -66,17 +67,22 @@ export default async function CompaniesPage() {
     revalidatePath("/admin/companies");
   }
 
-  async function handleSaveOutlet(data: { id?: string; name: string; address?: string; phone?: string; latitude?: number | null; longitude?: number | null; geofenceMeters?: number | null; companyId: string }) {
+  async function handleSaveOutlet(data: { id?: string; name: string; address?: string; phone?: string; latitude?: number | null; longitude?: number | null; geofenceMeters?: number | null; minStaffRequired?: number; companyId: string }) {
     "use server";
     const gpsProvided =
       data.latitude !== null && data.latitude !== undefined ||
       data.longitude !== null && data.longitude !== undefined ||
       data.geofenceMeters !== null && data.geofenceMeters !== undefined;
 
+    const minStaff = typeof data.minStaffRequired === "number" && !isNaN(data.minStaffRequired)
+      ? Math.max(1, Math.round(data.minStaffRequired))
+      : 1;
+
     const baseData: any = {
       name: data.name,
       address: data.address,
       phone: data.phone,
+      minStaffRequired: minStaff,
     };
 
     const withGps: any = {
