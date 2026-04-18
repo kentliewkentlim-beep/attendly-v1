@@ -15,6 +15,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { format } from "date-fns";
+import { fmtDateTimeMY } from "@/lib/datetime";
 import { getDisplayName } from "@/lib/displayName";
 
 export default function SupervisorAnnouncementClient({
@@ -123,7 +124,7 @@ export default function SupervisorAnnouncementClient({
                         </span>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
                           <Clock size={12} />
-                          {format(new Date(ann.createdAt), "MMM d, yyyy HH:mm")}
+                          {fmtDateTimeMY(ann.createdAt)}
                         </span>
                         {ann.outlet && (
                           <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full uppercase tracking-widest flex items-center gap-1">
