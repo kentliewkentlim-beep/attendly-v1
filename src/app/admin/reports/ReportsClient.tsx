@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { format, isValid, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import ExportButton from "@/components/ExportButton";
+import { fmtTimeMY } from "@/lib/datetime";
 
 export default function ReportsClient({ 
   attendanceData,
@@ -65,10 +66,10 @@ export default function ReportsClient({
     Phone: record.user.phone,
     Company: record.user.company.name,
     Outlet: record.user.outlet?.name || "N/A",
-    "Check In": record.checkIn ? format(new Date(record.checkIn), "HH:mm") : "-",
-    "Check Out": record.checkOut ? format(new Date(record.checkOut), "HH:mm") : "-",
-    "Lunch Start": record.lunchStart ? format(new Date(record.lunchStart), "HH:mm") : "-",
-    "Lunch End": record.lunchEnd ? format(new Date(record.lunchEnd), "HH:mm") : "-",
+    "Check In": fmtTimeMY(record.checkIn) || "-",
+    "Check Out": fmtTimeMY(record.checkOut) || "-",
+    "Lunch Start": fmtTimeMY(record.lunchStart) || "-",
+    "Lunch End": fmtTimeMY(record.lunchEnd) || "-",
     Status: record.isLate ? "LATE" : (record.checkIn ? "PRESENT" : "ABSENT")
   }));
 
@@ -230,13 +231,13 @@ export default function ReportsClient({
                         <div className="space-y-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">In</p>
                           <p className="text-xs font-bold text-slate-900 dark:text-white">
-                            {record.checkIn ? format(new Date(record.checkIn), "HH:mm") : "--:--"}
+                            {fmtTimeMY(record.checkIn)}
                           </p>
                         </div>
                         <div className="space-y-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Out</p>
                           <p className="text-xs font-bold text-slate-900 dark:text-white">
-                            {record.checkOut ? format(new Date(record.checkOut), "HH:mm") : "--:--"}
+                            {fmtTimeMY(record.checkOut)}
                           </p>
                         </div>
                       </div>
@@ -246,13 +247,13 @@ export default function ReportsClient({
                         <div className="space-y-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Start</p>
                           <p className="text-xs font-bold text-slate-900 dark:text-white">
-                            {record.lunchStart ? format(new Date(record.lunchStart), "HH:mm") : "--:--"}
+                            {fmtTimeMY(record.lunchStart)}
                           </p>
                         </div>
                         <div className="space-y-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">End</p>
                           <p className="text-xs font-bold text-slate-900 dark:text-white">
-                            {record.lunchEnd ? format(new Date(record.lunchEnd), "HH:mm") : "--:--"}
+                            {fmtTimeMY(record.lunchEnd)}
                           </p>
                         </div>
                       </div>
