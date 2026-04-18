@@ -20,6 +20,7 @@ import {
 import { format, differenceInDays, isValid } from "date-fns";
 import { AutoSubmit } from "@/components/AutoSubmit";
 import LeaveActionModal from "@/components/LeaveActionModal";
+import { getLeaveType, getDuration, leaveDays, LEAVE_TYPES } from "@/lib/leaveTypes";
 import ExportButton from "@/components/ExportButton";
 import { FileDown } from "lucide-react";
 import { revalidatePath } from "next/cache";
@@ -58,8 +59,7 @@ export default async function AdminLeavePage({
 
   // HR export payload — one row per leave request with all relevant fields
   const exportData = leaveRequests.map((l) => {
-    const days =
-      differenceInDays(new Date(l.endDate), new Date(l.startDate)) + 1;
+    const days = leaveDays(l.startDate, l.endDate, (l as any).durationType);
     return {
       "Employee Name": l.user?.name || "",
       "Nickname": l.user?.nickname || "",
@@ -70,7 +70,8 @@ export default async function AdminLeavePage({
       "Task": l.user?.task || "",
       "Company": l.user?.company?.name || "",
       "Outlet": l.user?.outlet?.name || "",
-      "Leave Type": l.type || "",
+      "Leave Type": getLeaveType(l.type).label,
+      "Duration": getDuration((l as any).durationType).label,
       "Start Date":
         l.startDate && isValid(new Date(l.startDate))
           ? format(new Date(l.startDate), "yyyy-MM-dd")
@@ -97,13 +98,27 @@ export default async function AdminLeavePage({
       where: { id },
       include: { user: true }
     });
+    if (!leave) return;
 
-    if (status === "APPROVED" && leave) {
-      const days = differenceInDays(new Date(leave.endDate), new Date(leave.startDate)) + 1;
-      await prisma.user.update({
-        where: { id: leave.userId },
-        data: { leaveBalance: { decrement: days } }
-      });
+    const typeDef = getLeaveType(leave.type);
+    const days = leaveDays(leave.startDate, leave.endDate, (leave as any).durationType);
+    const wasApproved = leave.status === "APPROVED";
+    const willBeApproved = status === "APPROVED";
+
+    // Balance: AL/MC/EL deduct; UL/CO do not. Only APPROVED deducts.
+    if (typeDef.deducts) {
+      if (!wasApproved && willBeApproved) {
+        await prisma.user.update({
+          where: { id: leave.userId },
+          data: { leaveBalance: { decrement: days } }
+        });
+      } else if (wasApproved && !willBeApproved) {
+        // Refund balance when un-approving
+        await prisma.user.update({
+          where: { id: leave.userId },
+          data: { leaveBalance: { increment: days } }
+        });
+      }
     }
 
     await prisma.leave.update({
@@ -222,7 +237,11 @@ export default async function AdminLeavePage({
                 </tr>
               ) : (
                 leaveRequests.map((leave) => {
-                  const days = differenceInDays(new Date(leave.endDate), new Date(leave.startDate)) + 1;
+                  const typeDef = getLeaveType(leave.type);
+                  const durAny = (leave as any).durationType;
+                  const days = leaveDays(leave.startDate, leave.endDate, durAny);
+                  const isHalfAM = durAny === "HALF_DAY_AM";
+                  const isHalfPM = durAny === "HALF_DAY_PM";
                   return (
                     <tr key={leave.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -237,22 +256,31 @@ export default async function AdminLeavePage({
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="space-y-1">
+                        <div className="space-y-1.5">
                           <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                            {format(new Date(leave.startDate), "MMM d")} - {format(new Date(leave.endDate), "MMM d, yyyy")}
+                            {format(new Date(leave.startDate), "MMM d")}
+                            {!isHalfAM && !isHalfPM && ` - ${format(new Date(leave.endDate), "MMM d, yyyy")}`}
+                            {(isHalfAM || isHalfPM) && `, ${format(new Date(leave.startDate), "yyyy")}`}
                           </p>
-                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full inline-block">
-                            {days} {days === 1 ? "Day" : "Days"}
-                          </p>
+                          <div className="flex items-center gap-1 flex-wrap">
+                            <span className={`inline-flex items-center text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${typeDef.badge}`}>
+                              {typeDef.shortLabel}
+                            </span>
+                            {isHalfAM && <span className="inline-flex items-center text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Half · AM</span>}
+                            {isHalfPM && <span className="inline-flex items-center text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">Half · PM</span>}
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+                              {days} {days === 1 ? "Day" : "Days"}
+                            </span>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="max-w-xs space-y-1">
-                          <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-1 italic">"{leave.reason || "No reason"}"</p>
+                      <td className="px-6 py-4 align-top">
+                        <div className="max-w-sm space-y-1">
+                          <p className="text-xs text-slate-600 dark:text-slate-400 italic whitespace-pre-wrap break-words">"{leave.reason || "No reason"}"</p>
                           {leave.supervisorNote && (
-                            <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium flex items-center">
-                              <MessageSquare size={10} className="mr-1" />
-                              {leave.supervisorNote}
+                            <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium flex items-start gap-1 mt-2 whitespace-pre-wrap break-words">
+                              <MessageSquare size={10} className="mt-0.5 flex-shrink-0" />
+                              <span>{leave.supervisorNote}</span>
                             </p>
                           )}
                         </div>
@@ -263,18 +291,9 @@ export default async function AdminLeavePage({
                           {leave.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <td className="px-6 py-4 whitespace-nowrap text-right align-top">
                         <div className="flex items-center justify-end gap-2">
-                          {leave.status === "PENDING" ? (
-                            <LeaveActionModal leave={leave} onAction={handleLeaveAction} />
-                          ) : (
-                            <button className="p-2 text-slate-300 cursor-not-allowed">
-                              <ShieldCheck size={18} />
-                            </button>
-                          )}
-                          <button className="p-2 text-slate-400 hover:text-slate-600 rounded-lg transition-all">
-                            <MoreVertical size={18} />
-                          </button>
+                          <LeaveActionModal leave={leave} onAction={handleLeaveAction} />
                         </div>
                       </td>
                     </tr>
