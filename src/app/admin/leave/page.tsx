@@ -73,7 +73,7 @@ export default async function AdminLeavePage({
       select: { id: true, name: true, minStaffRequired: true } as any,
     }) as any,
     prisma.leave.findMany({
-      where: { status: "APPROVED" },
+      where: { status: "APPROVED", user: { status: "ACTIVE" } },
       select: {
         id: true,
         startDate: true,
