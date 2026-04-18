@@ -92,7 +92,7 @@ model User {
   emergencyContactPhone    String?            // Emergency contact phone number
   emergencyContactRelation String?            // Spouse, Parents, Sibling, Friends
   status              String             @default("ACTIVE") // ACTIVE, INACTIVE
-  leaveBalance        Int                @default(14) // Annual leave balance
+  leaveBalance        Float              @default(14) // Annual leave balance (supports 0.5 for half day)
   forcePasswordChange Boolean            @default(true) // Force change on first login
   company             Company            @relation(fields: [companyId], references: [id])
   companyId           String
@@ -157,7 +157,8 @@ model Leave {
   user           User     @relation(fields: [userId], references: [id])
   startDate      DateTime
   endDate        DateTime
-  type           String   @default("ANNUAL") // ANNUAL, MEDICAL, EMERGENCY, UNPAID
+  type           String   @default("AL") // AL (Annual), MC (Medical), EL (Emergency), UL (Unpaid), CO (Change Off day)
+  durationType   String   @default("FULL_DAY") // FULL_DAY, HALF_DAY_AM, HALF_DAY_PM
   reason         String?
   attachment     String?  // URL or path to MC
   status         String   @default("PENDING") // PENDING, APPROVED, REJECTED
