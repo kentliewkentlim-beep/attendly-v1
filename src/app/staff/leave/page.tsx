@@ -19,6 +19,7 @@ export default async function StaffLeavePage() {
     startDate: Date; 
     endDate: Date; 
     type: string; 
+    durationType?: string;
     reason: string;
     attachment?: string;
   }) {
@@ -32,6 +33,7 @@ export default async function StaffLeavePage() {
         startDate: data.startDate,
         endDate: data.endDate,
         type: data.type,
+        durationType: data.durationType || "FULL_DAY",
         reason: data.reason,
         status: "PENDING",
         attachment: data.attachment
