@@ -21,6 +21,7 @@ import { format, differenceInDays, isValid } from "date-fns";
 import { AutoSubmit } from "@/components/AutoSubmit";
 import LeaveActionModal from "@/components/LeaveActionModal";
 import { getLeaveType, getDuration, leaveDays, LEAVE_TYPES } from "@/lib/leaveTypes";
+import { computeLeaveCoverage } from "@/lib/leaveCoverage";
 import ExportButton from "@/components/ExportButton";
 import { FileDown } from "lucide-react";
 import { revalidatePath } from "next/cache";
@@ -55,6 +56,49 @@ export default async function AdminLeavePage({
       }
     },
     orderBy: { createdAt: "desc" },
+  });
+
+  // --- Coverage data (for LeaveActionModal "Coverage Impact" panel) ---
+  const [allActiveStaff, coverageOutlets, allApprovedLeaves] = await Promise.all([
+    prisma.user.findMany({
+      where: {
+        status: "ACTIVE",
+        role: { in: ["STAFF", "PROMOTER", "SUPERVISOR"] },
+        outletId: { not: null },
+      },
+      select: { id: true, outletId: true },
+    }),
+    prisma.outlet.findMany({
+      select: { id: true, name: true, minStaffRequired: true } as any,
+    }) as any,
+    prisma.leave.findMany({
+      where: { status: "APPROVED" },
+      select: {
+        id: true,
+        startDate: true,
+        endDate: true,
+        user: { select: { id: true, name: true, outletId: true } },
+      },
+    }),
+  ]);
+  // Normalize outlet ids/minStaffRequired (handle legacy dbs missing the column)
+  const outletsNormalized = (coverageOutlets as any[]).map((o) => ({
+    id: String(o.id),
+    name: o.name,
+    minStaffRequired: typeof o.minStaffRequired === "number" ? o.minStaffRequired : 1,
+  }));
+  const staffNormalized = allActiveStaff.map((s: any) => ({ id: s.id, outletId: s.outletId != null ? String(s.outletId) : null }));
+  const approvedLeavesNormalized = allApprovedLeaves.map((l: any) => ({
+    id: l.id,
+    startDate: l.startDate,
+    endDate: l.endDate,
+    user: { id: l.user.id, name: l.user.name, outletId: l.user.outletId != null ? String(l.user.outletId) : null },
+  }));
+  const getCoverageFor = (leave: any) => computeLeaveCoverage({
+    leave: { id: leave.id, startDate: leave.startDate, endDate: leave.endDate, user: { outletId: leave.user?.outletId != null ? String(leave.user.outletId) : null } },
+    allStaff: staffNormalized,
+    approvedLeaves: approvedLeavesNormalized,
+    outlets: outletsNormalized,
   });
 
   // HR export payload — one row per leave request with all relevant fields
@@ -293,7 +337,7 @@ export default async function AdminLeavePage({
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right align-top">
                         <div className="flex items-center justify-end gap-2">
-                          <LeaveActionModal leave={leave} onAction={handleLeaveAction} />
+                          <LeaveActionModal leave={leave} coverage={getCoverageFor(leave)} onAction={handleLeaveAction} />
                         </div>
                       </td>
                     </tr>
