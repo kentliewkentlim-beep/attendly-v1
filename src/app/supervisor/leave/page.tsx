@@ -67,7 +67,7 @@ export default async function SupervisorLeavePage() {
     prisma.leave.findMany({
       where: {
         status: "APPROVED",
-        user: { companyId: user.companyId },
+        user: { companyId: user.companyId, status: "ACTIVE" },
       },
       select: {
         id: true,
