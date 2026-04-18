@@ -51,7 +51,10 @@ export default async function AdminLeaveCoveragePage({
       // Overlap filter: leave.startDate <= end AND leave.endDate >= start
       startDate: { lte: endDate },
       endDate: { gte: startDate },
-      ...(companyFilter ? { user: { companyId: companyFilter } } : {}),
+      user: {
+        status: "ACTIVE",
+        ...(companyFilter ? { companyId: companyFilter } : {}),
+      },
     },
     select: {
       id: true,
