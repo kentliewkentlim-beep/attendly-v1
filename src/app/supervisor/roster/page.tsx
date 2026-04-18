@@ -34,6 +34,22 @@ export default async function SupervisorRosterPage() {
     orderBy: { date: "asc" }
   });
 
+  // Approved leaves for overlay on the roster grid.
+  const approvedLeaves = await prisma.leave.findMany({
+    where: {
+      status: "APPROVED",
+      userId: { in: staff.map(s => s.id) },
+    },
+    select: {
+      id: true,
+      userId: true,
+      startDate: true,
+      endDate: true,
+      type: true,
+      durationType: true,
+    },
+  });
+
   const shiftTemplates = await prisma.shiftTemplate.findMany({
     where: { companyId: user.companyId },
     orderBy: { name: "asc" },
@@ -136,6 +152,7 @@ export default async function SupervisorRosterPage() {
     <SupervisorRosterClient 
       staff={staff} 
       rosters={rosters}
+      leaves={approvedLeaves}
       shiftTemplates={shiftTemplates}
       onSaveRoster={handleSaveRoster}
       onCopyRoster={handleCopyRoster}
