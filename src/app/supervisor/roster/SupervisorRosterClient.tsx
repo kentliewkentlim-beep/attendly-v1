@@ -93,6 +93,14 @@ export default function SupervisorRosterClient({
     const dateStr = format(date, "yyyy-MM-dd");
     const cellKey = `${userId}-${dateStr}`;
 
+    // Guard: don't assign a shift on days already covered by approved leave
+    if (getLeaveFor(userId, dateStr)) {
+      const leave = getLeaveFor(userId, dateStr);
+      const tCode = getLeaveType(leave.type).shortLabel;
+      alert(`This staff is on approved leave (${tCode}) for ${dateStr}. Cannot assign shift.`);
+      return;
+    }
+
     if (e.metaKey || e.ctrlKey) {
       // Toggle selection
       setSelectedCells(prev => 
@@ -121,9 +129,15 @@ export default function SupervisorRosterClient({
     if (selectedCells.length === 0) return;
     
     let newRosters = [...localRosters];
+    let skippedCount = 0;
     selectedCells.forEach(cellKey => {
       const [userId, ...rest] = cellKey.split("-");
       const dateStr = rest.join("-");
+      // Skip cells covered by approved leave
+      if (getLeaveFor(userId, dateStr)) {
+        skippedCount++;
+        return;
+      }
       const existingIndex = newRosters.findIndex((r) => r.userId === userId && r.date === dateStr);
       
       if (existingIndex > -1) {
@@ -136,6 +150,9 @@ export default function SupervisorRosterClient({
     
     setLocalRosters(newRosters);
     setSelectedCells([]);
+    if (skippedCount > 0) {
+      alert(`Skipped ${skippedCount} cell(s) because the staff is on approved leave for those dates.`);
+    }
   };
 
   const handleSave = async () => {
