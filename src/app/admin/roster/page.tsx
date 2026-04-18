@@ -20,7 +20,7 @@ export default async function AdminRosterPage() {
 
   // Approved leaves for overlay on the roster grid.
   const approvedLeaves = await prisma.leave.findMany({
-    where: { status: "APPROVED" },
+    where: { status: "APPROVED", user: { status: "ACTIVE" } },
     select: {
       id: true,
       userId: true,
