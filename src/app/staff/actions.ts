@@ -32,7 +32,7 @@ export async function handleCheckIn(formData: FormData) {
         lt: addDays(new Date(localDate), 1),
       },
     },
-    select: { outletId: true },
+    select: { outletId: true, shift: true },
   });
   const targetOutletId =
     rosterForDay?.outletId || sessionUser.outletId || null;
@@ -64,12 +64,32 @@ export async function handleCheckIn(formData: FormData) {
     }
   }
 
+  // Current time in Malaysia timezone
   const nowMY = new Date(
     new Date().toLocaleString("en-US", { timeZone: "Asia/Kuala_Lumpur" })
   );
-  const isLate =
-    nowMY.getHours() > 9 ||
-    (nowMY.getHours() === 9 && nowMY.getMinutes() > 0);
+
+  // Determine LATE by comparing against the user's actual shift start time.
+  // Look up today's roster shift → fetch matching ShiftTemplate.startTime.
+  // If no roster / no shift template / "Off" shift, default to NOT late
+  // (safer than false positives — admins can manually mark late if needed).
+  let isLate = false;
+  const shiftName = rosterForDay?.shift;
+  if (shiftName && shiftName.toLowerCase() !== "off") {
+    const shiftTemplate = await (prisma as any).shiftTemplate.findFirst({
+      where: { name: shiftName },
+      select: { startTime: true },
+    });
+    const startTime: string | undefined = shiftTemplate?.startTime;
+    if (startTime) {
+      const [sHour, sMin] = String(startTime)
+        .split(":")
+        .map((n) => Number(n));
+      const shiftStart = new Date(nowMY);
+      shiftStart.setHours(sHour || 0, sMin || 0, 0, 0);
+      isLate = nowMY.getTime() > shiftStart.getTime();
+    }
+  }
 
   try {
     await (prisma as any).attendance.upsert({
