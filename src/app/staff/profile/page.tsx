@@ -15,6 +15,7 @@ import {
   Heart,
   User as UserIcon,
   Pencil,
+  BookOpen,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -38,6 +39,7 @@ export default async function StaffProfilePage() {
     { label: "My Attendance", icon: History, href: "/staff/attendance", color: "text-blue-600 bg-blue-50" },
     { label: "Leave Balance", icon: Wallet, href: "/staff/leave", color: "text-emerald-600 bg-emerald-50" },
     { label: "Apply Leave", icon: CalendarCheck, href: "/staff/leave", color: "text-orange-600 bg-orange-50" },
+    { label: "Staff Handbook", icon: BookOpen, href: "/staff/handbook", color: "text-purple-600 bg-purple-50" },
     // Settings is rendered separately as <SettingsAccordion /> below so it can expand inline
   ];
 
