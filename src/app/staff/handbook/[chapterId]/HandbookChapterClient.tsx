@@ -82,12 +82,14 @@ const mdComponents: React.ComponentProps<typeof ReactMarkdown>["components"] = {
 export default function HandbookChapterClient({
   chapterId,
   version,
+  language,
   content,
   isAcknowledged,
   acknowledgedAt,
 }: {
   chapterId: string;
   version: string;
+  language: "zh" | "en" | "ms";
   content: string;
   isAcknowledged: boolean;
   acknowledgedAt: string | null;
@@ -102,6 +104,7 @@ export default function HandbookChapterClient({
       const fd = new FormData();
       fd.set("chapterId", chapterId);
       fd.set("version", version);
+      fd.set("language", language);
       const res = await acknowledgeChapter(fd);
       if (!res?.success) {
         setError(res?.error || "签收失败,请重试");
