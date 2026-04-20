@@ -1,17 +1,23 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { getChapter } from "../actions";
+import { getChapter, type Language } from "../actions";
 import HandbookChapterClient from "./HandbookChapterClient";
 
 export default async function HandbookChapterPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ chapterId: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { chapterId } = await params;
-  const chapter = await getChapter(chapterId);
+  const sp = (await searchParams) || {};
+  const rawLang = typeof sp.lang === "string" ? sp.lang : "zh";
+  const language: Language =
+    rawLang === "en" || rawLang === "ms" ? rawLang : "zh";
 
+  const chapter = await getChapter(chapterId, language);
   if (!chapter) {
     notFound();
   }
@@ -22,7 +28,7 @@ export default async function HandbookChapterPage({
         <Link
           href="/staff/handbook"
           className="flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 active:scale-95 dark:text-slate-300 dark:hover:bg-slate-800"
-          aria-label="返回章节列表"
+          aria-label="Back"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
@@ -52,11 +58,44 @@ export default async function HandbookChapterPage({
         </div>
       </header>
 
+      {/* Language Tabs */}
+      <nav className="mb-4 flex gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+        {(
+          [
+            { code: "zh", label: "中文", available: true },
+            { code: "en", label: "English", available: chapter.hasEn },
+            { code: "ms", label: "Bahasa", available: chapter.hasMs },
+          ] as const
+        ).map((t) => {
+          const isActive = chapter.language === t.code;
+          const disabled = !t.available;
+          return (
+            <Link
+              key={t.code}
+              href={`/staff/handbook/${chapter.chapterId}?lang=${t.code}`}
+              aria-disabled={disabled}
+              className={`flex-1 rounded-lg px-3 py-2 text-center text-sm font-medium transition-all ${
+                isActive
+                  ? "bg-white text-purple-700 shadow-sm dark:bg-slate-900 dark:text-purple-300"
+                  : disabled
+                  ? "cursor-not-allowed text-slate-400 dark:text-slate-600"
+                  : "text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-slate-100"
+              }`}
+              onClick={disabled ? (e) => e.preventDefault() : undefined}
+            >
+              {t.label}
+              {!t.available && <span className="ml-1 text-[10px]">(暂无)</span>}
+            </Link>
+          );
+        })}
+      </nav>
+
       <div className="my-4 h-px bg-slate-200 dark:bg-slate-800" />
 
       <HandbookChapterClient
         chapterId={chapter.chapterId}
         version={chapter.version}
+        language={chapter.language}
         content={chapter.content}
         isAcknowledged={chapter.isAcknowledged}
         acknowledgedAt={
