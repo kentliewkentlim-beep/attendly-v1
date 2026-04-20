@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BookOpen, CheckCircle2, ChevronRight } from "lucide-react";
-import { getChapters, type Language, DEFAULT_LANGUAGE } from "./actions";
+import { getChapters, type Language } from "./actions";
 
 const LANG_LABELS: Record<Language, { header: string; directory: string; progress: string; acked: string; notAcked: string; empty: string; remainingPrefix: string; remainingSuffix: string; allDone: string; heading: string; subheading: string }> = {
   zh: {
@@ -50,9 +50,9 @@ export default async function HandbookListPage({
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = (await searchParams) || {};
-  const rawLang = typeof sp.lang === "string" ? sp.lang : DEFAULT_LANGUAGE;
+  const rawLang = typeof sp.lang === "string" ? sp.lang : "en";
   const language: Language =
-    rawLang === "zh" || rawLang === "en" || rawLang === "ms" ? rawLang : DEFAULT_LANGUAGE;
+    rawLang === "zh" || rawLang === "en" || rawLang === "ms" ? rawLang : "en";
 
   const chapters = await getChapters(language);
   const L = LANG_LABELS[language];
