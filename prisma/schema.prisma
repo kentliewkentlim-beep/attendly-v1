@@ -218,6 +218,8 @@ model SopChapter {
   chapterNum  String   @map("chapter_num")
   title       String
   content     String   @db.Text
+  contentEn   String?  @db.Text @map("content_en")
+  contentMs   String?  @db.Text @map("content_ms")
   version     String   @default("V1.0")
   sortOrder   Int      @map("sort_order")
   isActive    Boolean  @default(true) @map("is_active")
@@ -234,12 +236,13 @@ model SopAcknowledgment {
   userId         String   @map("user_id")
   chapterId      String   @map("chapter_id")
   version        String
+  language       String   @default("zh")
   acknowledgedAt DateTime @default(now()) @map("acknowledged_at")
 
   user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   chapter SopChapter @relation(fields: [chapterId], references: [chapterId], onDelete: Cascade)
 
-  @@unique([userId, chapterId, version])
+  @@unique([userId, chapterId, version, language])
   @@index([userId])
   @@index([chapterId, version])
   @@map("sop_acknowledgments")
