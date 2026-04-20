@@ -217,6 +217,10 @@ model SopChapter {
   chapterId   String   @id @map("chapter_id")
   chapterNum  String   @map("chapter_num")
   title       String
+  chapterNumEn String? @map("chapter_num_en")
+  chapterNumMs String? @map("chapter_num_ms")
+  titleEn      String? @map("title_en")
+  titleMs      String? @map("title_ms")
   content     String   @db.Text
   contentEn   String?  @db.Text @map("content_en")
   contentMs   String?  @db.Text @map("content_ms")
