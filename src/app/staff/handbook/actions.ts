@@ -6,7 +6,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export type Language = "zh" | "en" | "ms";
-export const DEFAULT_LANGUAGE: Language = "en";
 
 export type ChapterListItem = {
   chapterId: string;
@@ -58,7 +57,7 @@ function pickContent(
   return { content: chapter.content, actualLanguage: "zh" };
 }
 
-export async function getChapters(language: Language = DEFAULT_LANGUAGE): Promise<ChapterListItem[]> {
+export async function getChapters(language: Language = "en"): Promise<ChapterListItem[]> {
   const sessionUser = await getCurrentUser();
   if (!sessionUser) redirect("/");
 
@@ -112,7 +111,7 @@ export async function getChapters(language: Language = DEFAULT_LANGUAGE): Promis
 
 export async function getChapter(
   chapterId: string,
-  language: Language = DEFAULT_LANGUAGE
+  language: Language = "en"
 ): Promise<ChapterDetail | null> {
   const sessionUser = await getCurrentUser();
   if (!sessionUser) redirect("/");
@@ -172,7 +171,7 @@ export async function acknowledgeChapter(formData: FormData) {
 
   const chapterId = formData.get("chapterId") as string;
   const version = formData.get("version") as string;
-  const language = (formData.get("language") as Language) || DEFAULT_LANGUAGE;
+  const language = (formData.get("language") as Language) || "en";
   if (!chapterId || !version) return { success: false, error: "Missing chapterId or version" };
 
   const chapter = await (prisma as any).sopChapter.findFirst({
