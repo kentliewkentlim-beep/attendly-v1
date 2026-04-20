@@ -253,6 +253,19 @@ export default async function StaffProfilePage() {
               <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
             </Link>
 
+            <Link
+              href={menuItems[3].href}
+              className="flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`p-2.5 rounded-xl transition-transform group-hover:scale-110 ${menuItems[3].color}`}>
+                  <BookOpen size={20} />
+                </div>
+                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{menuItems[3].label}</span>
+              </div>
+              <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
+            </Link>
+
             {/* Settings â expandable, contains Change Photo sub-item + all old settings items */}
             <SettingsAccordion onUpload={handleUpload} />
 
