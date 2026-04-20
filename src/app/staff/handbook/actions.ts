@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export type Language = "zh" | "en" | "ms";
+export const DEFAULT_LANGUAGE: Language = "en";
 
 export type ChapterListItem = {
   chapterId: string;
@@ -34,7 +35,20 @@ export type ChapterDetail = {
   hasMs: boolean;
 };
 
-// Default language when query uses an unavailable translation
+// Localized title picker with fallback
+function localize(
+  row: { chapterNum: string; title: string; chapterNumEn: string | null; titleEn: string | null; chapterNumMs: string | null; titleMs: string | null },
+  language: Language
+): { chapterNum: string; title: string } {
+  if (language === "en") {
+    return { chapterNum: row.chapterNumEn ?? row.chapterNum, title: row.titleEn ?? row.title };
+  }
+  if (language === "ms") {
+    return { chapterNum: row.chapterNumMs ?? row.chapterNum, title: row.titleMs ?? row.title };
+  }
+  return { chapterNum: row.chapterNum, title: row.title };
+}
+
 function pickContent(
   chapter: { content: string; contentEn: string | null; contentMs: string | null },
   language: Language
@@ -44,7 +58,7 @@ function pickContent(
   return { content: chapter.content, actualLanguage: "zh" };
 }
 
-export async function getChapters(language: Language = "zh"): Promise<ChapterListItem[]> {
+export async function getChapters(language: Language = DEFAULT_LANGUAGE): Promise<ChapterListItem[]> {
   const sessionUser = await getCurrentUser();
   if (!sessionUser) redirect("/");
 
@@ -55,7 +69,11 @@ export async function getChapters(language: Language = "zh"): Promise<ChapterLis
       select: {
         chapterId: true,
         chapterNum: true,
+        chapterNumEn: true,
+        chapterNumMs: true,
         title: true,
+        titleEn: true,
+        titleMs: true,
         version: true,
         sortOrder: true,
         updatedAt: true,
@@ -75,11 +93,12 @@ export async function getChapters(language: Language = "zh"): Promise<ChapterLis
   }
 
   return (chapters as Array<any>).map((c) => {
+    const loc = localize(c, language);
     const ackedAt = ackMap.get(`${c.chapterId}::${c.version}`) ?? null;
     return {
       chapterId: c.chapterId,
-      chapterNum: c.chapterNum,
-      title: c.title,
+      chapterNum: loc.chapterNum,
+      title: loc.title,
       version: c.version,
       sortOrder: c.sortOrder,
       updatedAt: c.updatedAt,
@@ -93,7 +112,7 @@ export async function getChapters(language: Language = "zh"): Promise<ChapterLis
 
 export async function getChapter(
   chapterId: string,
-  language: Language = "zh"
+  language: Language = DEFAULT_LANGUAGE
 ): Promise<ChapterDetail | null> {
   const sessionUser = await getCurrentUser();
   if (!sessionUser) redirect("/");
@@ -103,7 +122,11 @@ export async function getChapter(
     select: {
       chapterId: true,
       chapterNum: true,
+      chapterNumEn: true,
+      chapterNumMs: true,
       title: true,
+      titleEn: true,
+      titleMs: true,
       content: true,
       contentEn: true,
       contentMs: true,
@@ -114,6 +137,7 @@ export async function getChapter(
   if (!chapter) return null;
 
   const { content, actualLanguage } = pickContent(chapter, language);
+  const loc = localize(chapter, actualLanguage);
 
   const ack = await (prisma as any).sopAcknowledgment.findUnique({
     where: {
@@ -129,8 +153,8 @@ export async function getChapter(
 
   return {
     chapterId: chapter.chapterId,
-    chapterNum: chapter.chapterNum,
-    title: chapter.title,
+    chapterNum: loc.chapterNum,
+    title: loc.title,
     content,
     version: chapter.version,
     language: actualLanguage,
@@ -148,7 +172,7 @@ export async function acknowledgeChapter(formData: FormData) {
 
   const chapterId = formData.get("chapterId") as string;
   const version = formData.get("version") as string;
-  const language = (formData.get("language") as Language) || "zh";
+  const language = (formData.get("language") as Language) || DEFAULT_LANGUAGE;
   if (!chapterId || !version) return { success: false, error: "Missing chapterId or version" };
 
   const chapter = await (prisma as any).sopChapter.findFirst({
