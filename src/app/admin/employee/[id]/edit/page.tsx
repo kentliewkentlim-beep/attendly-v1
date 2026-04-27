@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Heart } from "lucide-react";
 
 export default async function EmployeeEditPage({
   params,
@@ -45,6 +45,12 @@ export default async function EmployeeEditPage({
       .getAll("supervisorOutletIds")
       .map((v) => String(v));
     const requiresGeofence = formData.get("requiresGeofence") !== "NO";
+    const emergencyContactName =
+      ((formData.get("emergencyContactName") as string) || "").trim() || null;
+    const emergencyContactPhone =
+      ((formData.get("emergencyContactPhone") as string) || "").trim() || null;
+    const emergencyContactRelation =
+      ((formData.get("emergencyContactRelation") as string) || "").trim() || null;
     await (prisma as any).user.update({
       where: { id },
       data: {
@@ -59,6 +65,9 @@ export default async function EmployeeEditPage({
         companyId,
         outletId: outletId ? BigInt(outletId as string) : null,
         requiresGeofence,
+        emergencyContactName,
+        emergencyContactPhone,
+        emergencyContactRelation,
       },
     });
 
@@ -94,6 +103,8 @@ export default async function EmployeeEditPage({
 
     redirect(`/admin/employee/${id}`);
   }
+
+  const relationOptions = ["Spouse", "Parent", "Sibling", "Child", "Friend", "Other"];
 
   return (
     <div className="space-y-8">
@@ -301,6 +312,61 @@ export default async function EmployeeEditPage({
               defaultValue={employee.task || ""}
               className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
             />
+          </div>
+        </div>
+
+        {/* Emergency Contact section */}
+        <div className="border-t border-slate-100 dark:border-slate-800 pt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Heart size={16} className="text-red-500" />
+            <h2 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-[0.2em]">
+              Emergency Contact
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                Contact Name
+              </label>
+              <input
+                type="text"
+                name="emergencyContactName"
+                defaultValue={(employee as any).emergencyContactName || ""}
+                placeholder="Full name"
+                className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                Contact Phone
+              </label>
+              <input
+                type="tel"
+                name="emergencyContactPhone"
+                defaultValue={(employee as any).emergencyContactPhone || ""}
+                placeholder="e.g. 0123456789"
+                className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                Relation
+              </label>
+              <select
+                name="emergencyContactRelation"
+                defaultValue={(employee as any).emergencyContactRelation || ""}
+                className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+              >
+                <option value="">Select...</option>
+                {relationOptions.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
