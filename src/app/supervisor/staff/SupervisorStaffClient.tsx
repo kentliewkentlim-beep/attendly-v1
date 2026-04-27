@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { 
   Users, 
   Search, 
@@ -10,7 +11,7 @@ import {
   CheckCircle2, 
   XCircle, 
   AlertCircle,
-  MoreVertical,
+  Pencil,
   Calendar,
   LogIn
 } from "lucide-react";
@@ -173,18 +174,25 @@ export default function SupervisorStaffClient({
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        {!attendance?.checkIn && !isOnLeave && (
-                          <button 
-                            onClick={() => onManualCheckIn(member.id)}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-lg shadow-blue-500/20"
+                        <div className="inline-flex items-center gap-2">
+                          {!attendance?.checkIn && !isOnLeave && (
+                            <button 
+                              onClick={() => onManualCheckIn(member.id)}
+                              className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-lg shadow-blue-500/20"
+                            >
+                              <LogIn size={12} />
+                              Manual In
+                            </button>
+                          )}
+                          <Link
+                            href={`/supervisor/staff/${member.id}/edit`}
+                            title="Edit details & emergency contact"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all"
                           >
-                            <LogIn size={12} />
-                            Manual In
-                          </button>
-                        )}
-                        <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors ml-2">
-                          <MoreVertical size={18} />
-                        </button>
+                            <Pencil size={12} />
+                            Edit
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   );
