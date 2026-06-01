@@ -15,7 +15,8 @@ import {
   ChevronRight,
   MessageSquare,
   ShieldCheck,
-  Users
+  Users,
+  Paperclip
 } from "lucide-react";
 import { format, differenceInDays, isValid } from "date-fns";
 import { AutoSubmit } from "@/components/AutoSubmit";
@@ -334,6 +335,17 @@ export default async function AdminLeavePage({
                               <MessageSquare size={10} className="mt-0.5 flex-shrink-0" />
                               <span>{leave.supervisorNote}</span>
                             </p>
+                          )}
+                          {(leave as any).attachment && (
+                            <a
+                              href={(leave as any).attachment}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 mt-2 text-[10px] font-bold text-blue-600 hover:underline"
+                            >
+                              <Paperclip size={10} />
+                              View MC
+                            </a>
                           )}
                         </div>
                       </td>

@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { 
-  CalendarCheck, 
-  Plus, 
-  Wallet, 
-  History, 
-  ChevronRight, 
+import { useState, useRef } from "react";
+import {
+  CalendarCheck,
+  Plus,
+  Wallet,
+  History,
+  ChevronRight,
   XCircle,
   Calendar,
   FileText,
   Paperclip,
   Send,
-  AlertCircle
+  AlertCircle,
+  Loader2,
+  CheckCircle2
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import {
@@ -24,14 +26,16 @@ import {
 } from "@/lib/leaveTypes";
 import type { LeaveTypeCode, DurationType } from "@/lib/leaveTypes";
 
-export default function StaffLeaveClient({ 
-  leaveBalance, 
+export default function StaffLeaveClient({
+  leaveBalance,
   leaveHistory,
-  onApplyLeave 
-}: { 
+  onApplyLeave,
+  onUploadMc
+}: {
   leaveBalance: number;
   leaveHistory: any[];
   onApplyLeave: (data: any) => Promise<void>;
+  onUploadMc?: (formData: FormData) => Promise<string | null>;
 }) {
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [startDate, setStartDate] = useState("");
@@ -41,10 +45,53 @@ export default function StaffLeaveClient({
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // MC document upload state
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [mcUrl, setMcUrl] = useState("");
+  const [mcName, setMcName] = useState("");
+  const [mcUploading, setMcUploading] = useState(false);
+  const [mcError, setMcError] = useState("");
+
+  const resetMc = () => {
+    setMcUrl("");
+    setMcName("");
+    setMcUploading(false);
+    setMcError("");
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const handleMcSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onUploadMc) return;
+    setMcError("");
+    const okType = file.type.startsWith("image/") || file.type === "application/pdf";
+    if (!okType) { setMcError("只接受图片或 PDF"); return; }
+    if (file.size > 10 * 1024 * 1024) { setMcError("文件太大（上限 10MB）"); return; }
+    setMcName(file.name);
+    setMcUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const url = await onUploadMc(fd);
+      if (url) {
+        setMcUrl(url);
+      } else {
+        setMcError("上传失败，请重试");
+        setMcName("");
+      }
+    } catch {
+      setMcError("上传失败，请重试");
+      setMcName("");
+    } finally {
+      setMcUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!startDate || !endDate) return;
-    
+    if (mcUploading) return; // wait for upload to finish
+
     setIsSubmitting(true);
     // Half-day must be same-day — snap endDate to startDate
     const effectiveEnd = durationType === "FULL_DAY" ? new Date(endDate) : new Date(startDate);
@@ -53,7 +100,8 @@ export default function StaffLeaveClient({
       endDate: effectiveEnd,
       type: leaveType,
       durationType,
-      reason
+      reason,
+      attachment: leaveType === "MC" && mcUrl ? mcUrl : undefined
     });
     setIsSubmitting(false);
     setIsApplyModalOpen(false);
@@ -62,6 +110,7 @@ export default function StaffLeaveClient({
     setLeaveType("AL");
     setDurationType("FULL_DAY");
     setReason("");
+    resetMc();
   };
 
   const getStatusBadge = (status: string) => {
@@ -165,6 +214,17 @@ export default function StaffLeaveClient({
                       <p className="text-xs text-slate-500 dark:text-slate-400 italic mt-3 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                         "{leave.reason || "No reason provided"}"
                       </p>
+                      {leave.attachment && (
+                        <a
+                          href={leave.attachment}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 mt-2 text-[10px] font-bold text-blue-600 hover:underline"
+                        >
+                          <Paperclip size={11} />
+                          查看附件 MC
+                        </a>
+                      )}
                     </div>
                   );
                 })
@@ -183,7 +243,7 @@ export default function StaffLeaveClient({
                 <Plus className="text-blue-600" size={20} />
                 Apply for Leave
               </h3>
-              <button onClick={() => setIsApplyModalOpen(false)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-400">
+              <button onClick={() => { setIsApplyModalOpen(false); resetMc(); }} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-400">
                 <XCircle size={20} />
               </button>
             </div>
@@ -279,9 +339,43 @@ export default function StaffLeaveClient({
                 </div>
 
                 {leaveType === "MC" && (
-                  <div className="p-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center gap-2 group cursor-pointer hover:border-blue-500 transition-all">
-                    <Paperclip size={20} className="text-slate-400 group-hover:text-blue-500" />
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest group-hover:text-blue-600">Attach MC Document</span>
+                  <div>
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/*,application/pdf"
+                      className="hidden"
+                      onChange={handleMcSelect}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current?.click()}
+                      className={`w-full p-4 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 group transition-all ${
+                        mcUrl
+                          ? "border-emerald-300 bg-emerald-50/50 dark:bg-emerald-900/10"
+                          : "border-slate-200 dark:border-slate-800 hover:border-blue-500"
+                      }`}
+                    >
+                      {mcUploading ? (
+                        <>
+                          <Loader2 size={20} className="text-blue-500 animate-spin" />
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">上传中…</span>
+                        </>
+                      ) : mcUrl ? (
+                        <>
+                          <CheckCircle2 size={20} className="text-emerald-500" />
+                          <span className="text-[10px] font-bold text-emerald-600 tracking-wide max-w-full truncate px-2">{mcName || "已上传"}</span>
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">点击更换</span>
+                        </>
+                      ) : (
+                        <>
+                          <Paperclip size={20} className="text-slate-400 group-hover:text-blue-500" />
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest group-hover:text-blue-600">附上医生证明 (Attach MC) · 可选</span>
+                          <span className="text-[9px] font-medium text-slate-400">图片或 PDF，上限 10MB</span>
+                        </>
+                      )}
+                    </button>
+                    {mcError && <p className="text-[10px] text-red-600 font-bold mt-1.5 ml-1">{mcError}</p>}
                   </div>
                 )}
               </div>
