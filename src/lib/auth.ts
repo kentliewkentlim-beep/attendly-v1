@@ -1,9 +1,16 @@
 import { cookies } from "next/headers";
 import prisma from "./prisma";
+import {
+  SESSION_COOKIE,
+  SESSION_TTL_MS,
+  SESSION_TTL_REMEMBER_MS,
+  signSession,
+  verifySession,
+} from "./session";
 
 export async function getCurrentUser() {
   const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
+  const userId = await verifySession(cookieStore.get(SESSION_COOKIE)?.value);
 
   if (!userId) return null;
 
@@ -27,17 +34,22 @@ export async function getCurrentUser() {
   }
 }
 
-export async function login(userId: string) {
+export async function login(userId: string, rememberMe = false) {
+  const ttlMs = rememberMe ? SESSION_TTL_REMEMBER_MS : SESSION_TTL_MS;
   const cookieStore = await cookies();
-  cookieStore.set("userId", userId, {
+  cookieStore.set(SESSION_COOKIE, await signSession(userId, ttlMs), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
+    maxAge: Math.floor(ttlMs / 1000),
   });
 }
 
 export async function logout() {
   const cookieStore = await cookies();
+  cookieStore.delete(SESSION_COOKIE);
+  // Clear the pre-signed-session cookie too, so anyone still holding one from
+  // before this change is fully logged out rather than left with a stale cookie.
   cookieStore.delete("userId");
 }

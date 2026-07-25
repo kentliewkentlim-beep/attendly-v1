@@ -23,8 +23,8 @@ export default async function LoginPage({
     });
 
     if (user && user.password === password) {
-      await login(user.id);
-      
+      await login(user.id, rememberMe);
+
       if (user.forcePasswordChange) {
         redirect("/auth/force-password-change");
       }

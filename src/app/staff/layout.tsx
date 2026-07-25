@@ -35,6 +35,9 @@ export default async function StaffLayout({
 }) {
   const sessionUser = await getCurrentUser();
   if (!sessionUser) redirect("/");
+  // Read fresh from the DB on every request, so an admin-triggered password
+  // reset takes effect immediately instead of waiting for the next login.
+  if (sessionUser.forcePasswordChange) redirect("/auth/force-password-change");
 
   const user = await prisma.user.findUnique({
     where: { id: sessionUser.id },

@@ -8,9 +8,13 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const user = await getCurrentUser();
-  if (!user || user.role !== "ADMIN") {
+  if (!user) redirect("/");
+  if (user.role !== "ADMIN") {
     redirect("/staff");
   }
+  // Read fresh from the DB on every request, so an admin-triggered password
+  // reset takes effect immediately instead of waiting for the next login.
+  if (user.forcePasswordChange) redirect("/auth/force-password-change");
 
   return (
     <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-950 flex flex-col">

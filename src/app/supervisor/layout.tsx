@@ -37,6 +37,9 @@ export default async function SupervisorLayout({
   if (sessionUser.role !== "SUPERVISOR" && sessionUser.role !== "ADMIN") {
     redirect("/staff");
   }
+  // Read fresh from the DB on every request, so an admin-triggered password
+  // reset takes effect immediately instead of waiting for the next login.
+  if (sessionUser.forcePasswordChange) redirect("/auth/force-password-change");
 
   const user = await prisma.user.findUnique({
     where: { id: sessionUser.id },
